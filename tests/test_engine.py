@@ -676,6 +676,59 @@ class TestMCPServer:
         assert "error" in result
         assert "not configured" in result["error"]
 
+    def test_build_html_without_saver(self):
+        """Without template_saver, build_email_html should still work — no template_id."""
+        from mcp.server import EmailEngineMCPServer
+
+        server = EmailEngineMCPServer()
+        result = server.handle_tool_call("build_email_html", {
+            "template": _minimal_template(),
+        })
+        assert "html" in result
+        assert "template_id" not in result
+        assert "editor_link" not in result
+
+    def test_build_html_with_saver(self):
+        """With template_saver, build_email_html should return template_id + editor_link."""
+        from mcp.server import EmailEngineMCPServer
+
+        saved = {}
+
+        def mock_saver(template_id, template_dict):
+            saved["id"] = template_id
+            saved["template"] = template_dict
+            return {
+                "template_id": template_id,
+                "editor_link": f"http://localhost:3000/editor/{template_id}",
+            }
+
+        server = EmailEngineMCPServer(template_saver=mock_saver)
+        result = server.handle_tool_call("build_email_html", {
+            "template": _minimal_template(),
+        })
+        assert "html" in result
+        assert "template_id" in result
+        assert "editor_link" in result
+        assert result["template_id"] == saved["id"]
+        assert "/editor/" in result["editor_link"]
+        assert saved["template"]["components"]  # template was passed to saver
+
+    def test_build_html_saver_failure_non_fatal(self):
+        """If template_saver raises, build should still return html (non-fatal)."""
+        from mcp.server import EmailEngineMCPServer
+
+        def failing_saver(template_id, template_dict):
+            raise RuntimeError("S3 is down")
+
+        server = EmailEngineMCPServer(template_saver=failing_saver)
+        result = server.handle_tool_call("build_email_html", {
+            "template": _minimal_template(),
+        })
+        assert "html" in result
+        assert "Hello World" in result["html"]
+        # No template_id/editor_link since saver failed
+        assert "template_id" not in result
+
 
 # ---------------------------------------------------------------------------
 # Integration: Render real template

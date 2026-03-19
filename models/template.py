@@ -11,4 +11,5 @@ class Template(Base, TimestampMixin):
     name = Column(String, nullable=False, default="Untitled")
     subject = Column(String, default="")
     components = Column(JSONB, nullable=False, default=list)  # component tree
+    s3_key = Column(String, default="")  # S3 path for template JSON
     thumbnail_url = Column(String, default="")

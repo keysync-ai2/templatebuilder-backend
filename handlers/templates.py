@@ -19,6 +19,8 @@ from services.template_service import (
 )
 from services.s3_service import upload_export
 from engine.schema import to_frontend_format
+from config.s3 import get_from_s3
+from models.template import Template
 
 
 def handler(event, context):
@@ -29,6 +31,14 @@ def handler(event, context):
 
     if method == "OPTIONS":
         return options_response()
+
+    # Public route: /api/templates/public/{id} — no auth, for MCP-generated templates
+    parts = path.rstrip("/").split("/")
+    if len(parts) == 5 and parts[2] == "templates" and parts[3] == "public":
+        template_id = parts[4]
+        if method == "GET":
+            return _get_public(template_id)
+        return error(405, "METHOD_NOT_ALLOWED", "Only GET allowed")
 
     payload = verify_token(headers)
     if not payload:
@@ -97,12 +107,31 @@ def _get(template_id: str, user_id: str):
         t = get_template(session, template_id, user_id)
         if not t:
             return error(404, "NOT_FOUND", "Template not found")
-        # Convert stored components to frontend nested format
-        frontend = to_frontend_format({"components": t.components or []})
+
+        # If template has S3 key, load components from S3
+        if t.s3_key:
+            try:
+                import json as _json
+                s3_data = _json.loads(get_from_s3(t.s3_key))
+                components = s3_data.get("components", [])
+                template_name = s3_data.get("templateName", t.name)
+                template_subject = s3_data.get("templateSubject", t.subject or "")
+            except Exception:
+                # Fallback to DB components if S3 fetch fails
+                components = t.components or []
+                template_name = t.name
+                template_subject = t.subject or ""
+        else:
+            components = t.components or []
+            template_name = t.name
+            template_subject = t.subject or ""
+
+        # Convert to frontend nested format
+        frontend = to_frontend_format({"components": components})
         return success(200, {
             "id": t.id,
-            "templateName": t.name,
-            "templateSubject": t.subject or "",
+            "templateName": template_name,
+            "templateSubject": template_subject,
             "components": frontend.get("components", []),
             "updated_at": t.updated_at.isoformat(),
         })
@@ -128,6 +157,42 @@ def _delete(template_id: str, user_id: str):
         if not deleted:
             return error(404, "NOT_FOUND", "Template not found")
         return success(200, {"deleted": True})
+    finally:
+        session.close()
+
+
+def _get_public(template_id: str):
+    """Get a template by ID without auth — for MCP-generated editor links."""
+    session = get_session()
+    try:
+        t = session.query(Template).filter_by(id=template_id).first()
+        if not t:
+            return error(404, "NOT_FOUND", "Template not found")
+
+        # Load from S3 if available
+        if t.s3_key:
+            try:
+                import json as _json
+                s3_data = _json.loads(get_from_s3(t.s3_key))
+                components = s3_data.get("components", [])
+                template_name = s3_data.get("templateName", t.name)
+                template_subject = s3_data.get("templateSubject", t.subject or "")
+            except Exception:
+                components = t.components or []
+                template_name = t.name
+                template_subject = t.subject or ""
+        else:
+            components = t.components or []
+            template_name = t.name
+            template_subject = t.subject or ""
+
+        frontend = to_frontend_format({"components": components})
+        return success(200, {
+            "id": t.id,
+            "templateName": template_name,
+            "templateSubject": template_subject,
+            "components": frontend.get("components", []),
+        })
     finally:
         session.close()
 

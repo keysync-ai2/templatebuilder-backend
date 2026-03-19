@@ -1,7 +1,6 @@
 """MCP Server for Email HTML Engine.
 
 Implements the Model Context Protocol (MCP) over stdio transport.
-Detachable — imports only from engine/, never from handlers/services/models.
 
 Deployment modes:
   1. Embedded — ChatFunction Lambda calls handle_tool_call() in-process
@@ -15,6 +14,7 @@ Usage (standalone):
 import json
 import sys
 import logging
+import uuid
 from typing import Optional, Callable
 
 # Engine imports only — no Lambda/DB/AWS dependencies
@@ -28,21 +28,31 @@ logger = logging.getLogger(__name__)
 JSONRPC_VERSION = "2.0"
 MCP_PROTOCOL_VERSION = "2024-11-05"
 SERVER_NAME = "email-engine"
-SERVER_VERSION = "1.0.0"
+SERVER_VERSION = "1.1.0"
 
 
 class EmailEngineMCPServer:
     """MCP server wrapping the email HTML engine.
 
     Args:
-        preset_loader: Optional async callable(preset_id) -> dict.
+        preset_loader: Optional callable(preset_id) -> dict.
             When embedded in Lambda, loads preset JSON from S3.
             When standalone, can load from local files or S3.
             If None, preset tools return an error asking for configuration.
+
+        template_saver: Optional callable(template_id, template_dict) -> dict.
+            Called on build_email_html to auto-save template JSON to S3 + DB.
+            Should return {"template_id": str, "editor_link": str}.
+            If None, auto-save is skipped (standalone mode).
     """
 
-    def __init__(self, preset_loader: Optional[Callable] = None):
+    def __init__(
+        self,
+        preset_loader: Optional[Callable] = None,
+        template_saver: Optional[Callable] = None,
+    ):
         self.preset_loader = preset_loader
+        self.template_saver = template_saver
         self._presets_cache: dict = {}
 
     # ------------------------------------------------------------------
@@ -82,11 +92,24 @@ class EmailEngineMCPServer:
 
         html = build_html(template)
         frontend_template = to_frontend_format(template)
-        return {
+
+        result = {
             "html": html,
             "size_bytes": len(html.encode("utf-8")),
             "template": frontend_template,
         }
+
+        # Auto-save if template_saver is configured
+        if self.template_saver:
+            try:
+                template_id = str(uuid.uuid4())
+                save_result = self.template_saver(template_id, frontend_template)
+                result["template_id"] = save_result["template_id"]
+                result["editor_link"] = save_result["editor_link"]
+            except Exception as e:
+                logger.warning(f"Auto-save failed (non-fatal): {e}")
+
+        return result
 
     def _validate(self, args: dict) -> dict:
         template = args.get("template")
