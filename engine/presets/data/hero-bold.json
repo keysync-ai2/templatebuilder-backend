@@ -1,0 +1,114 @@
+{
+  "preset_id": "hero-bold",
+  "name": "Bold Hero Section",
+  "description": "Full-width hero with large heading, subtitle text, and a prominent CTA button. Great for sales announcements, product launches, and event invitations.",
+  "category": "hero",
+  "tags": ["hero", "sale", "announcement", "bold", "cta"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "hero-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{primaryColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "hero-col",
+          "type": "column",
+          "props": {"width": "100%", "backgroundColor": "{{primaryColor}}", "padding": "40px 20px"},
+          "styles": {},
+          "parentId": "hero-row",
+          "children": [
+            {
+              "id": "hero-heading",
+              "type": "heading",
+              "props": {
+                "content": "{{headline}}",
+                "level": "h1",
+                "fontSize": 42,
+                "color": "#FFFFFF",
+                "fontFamily": "Georgia, serif",
+                "textAlign": "center",
+                "padding": "10px 20px"
+              },
+              "styles": {},
+              "parentId": "hero-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "hero-spacer-1",
+              "type": "spacer",
+              "props": {"height": "8px"},
+              "styles": {},
+              "parentId": "hero-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "hero-subtitle",
+              "type": "text",
+              "props": {
+                "content": "{{subtitle}}",
+                "fontSize": 18,
+                "color": "#E0E0E0",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 40px 20px"
+              },
+              "styles": {},
+              "parentId": "hero-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "hero-button",
+              "type": "button",
+              "props": {
+                "text": "{{buttonText}}",
+                "href": "{{buttonUrl}}",
+                "backgroundColor": "#FFFFFF",
+                "color": "{{primaryColor}}",
+                "padding": "14px 36px",
+                "borderRadius": "6px",
+                "fontSize": 16,
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "hero-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "hero-spacer-2",
+              "type": "spacer",
+              "props": {"height": "10px"},
+              "styles": {},
+              "parentId": "hero-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "primaryColor": {"type": "color", "default": "#2563EB", "label": "Primary Color"},
+    "headline": {"type": "string", "default": "Your Big Announcement", "label": "Headline"},
+    "subtitle": {"type": "string", "default": "Add a compelling subtitle that supports your main message and drives action.", "label": "Subtitle"},
+    "buttonText": {"type": "string", "default": "Get Started", "label": "Button Text"},
+    "buttonUrl": {"type": "string", "default": "https://example.com", "label": "Button URL"}
+  }
+}

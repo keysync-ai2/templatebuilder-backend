@@ -1,0 +1,97 @@
+{
+  "preset_id": "cta-single",
+  "name": "Single CTA Block",
+  "description": "Centered call-to-action with heading, supporting text, and one prominent button. Use for driving a single action like signup, purchase, or download.",
+  "category": "cta",
+  "tags": ["cta", "button", "action", "centered"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "cta-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "cta-col",
+          "type": "column",
+          "props": {"width": "100%", "backgroundColor": "{{backgroundColor}}", "padding": "30px 20px"},
+          "styles": {},
+          "parentId": "cta-row",
+          "children": [
+            {
+              "id": "cta-heading",
+              "type": "heading",
+              "props": {
+                "content": "{{heading}}",
+                "level": "h2",
+                "fontSize": 28,
+                "color": "{{textColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 20px 5px"
+              },
+              "styles": {},
+              "parentId": "cta-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "cta-text",
+              "type": "text",
+              "props": {
+                "content": "{{supportText}}",
+                "fontSize": 15,
+                "color": "{{subtextColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 40px 20px"
+              },
+              "styles": {},
+              "parentId": "cta-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "cta-button",
+              "type": "button",
+              "props": {
+                "text": "{{buttonText}}",
+                "href": "{{buttonUrl}}",
+                "backgroundColor": "{{buttonColor}}",
+                "color": "#FFFFFF",
+                "padding": "14px 40px",
+                "borderRadius": "6px",
+                "fontSize": 16,
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "cta-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "backgroundColor": {"type": "color", "default": "#F8F9FA", "label": "Background Color"},
+    "textColor": {"type": "color", "default": "#1a1a1a", "label": "Heading Color"},
+    "subtextColor": {"type": "color", "default": "#666666", "label": "Subtext Color"},
+    "buttonColor": {"type": "color", "default": "#2563EB", "label": "Button Color"},
+    "heading": {"type": "string", "default": "Ready to Get Started?", "label": "Heading"},
+    "supportText": {"type": "string", "default": "Join thousands of users who are already building beautiful emails.", "label": "Support Text"},
+    "buttonText": {"type": "string", "default": "Start Free Trial", "label": "Button Text"},
+    "buttonUrl": {"type": "string", "default": "https://example.com/signup", "label": "Button URL"}
+  }
+}

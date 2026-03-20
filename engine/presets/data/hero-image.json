@@ -1,0 +1,140 @@
+{
+  "preset_id": "hero-image",
+  "name": "Image Hero Section",
+  "description": "Full-width hero with a large image at top followed by heading, subtitle, and CTA button below. Perfect for product showcases and visual campaigns.",
+  "category": "hero",
+  "tags": ["hero", "image", "visual", "cta", "dark"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "preset-hero-image-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-hero-image-col",
+          "type": "column",
+          "props": {"width": "100%", "backgroundColor": "{{backgroundColor}}", "padding": "0"},
+          "styles": {},
+          "parentId": "preset-hero-image-row",
+          "children": [
+            {
+              "id": "preset-hero-image-img",
+              "type": "image",
+              "props": {
+                "src": "{{heroImage}}",
+                "alt": "Hero image",
+                "width": "100%",
+                "padding": "0"
+              },
+              "styles": {},
+              "parentId": "preset-hero-image-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-hero-image-spacer-1",
+              "type": "spacer",
+              "props": {"height": "24px"},
+              "styles": {},
+              "parentId": "preset-hero-image-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-hero-image-heading",
+              "type": "heading",
+              "props": {
+                "content": "{{headline}}",
+                "level": "h1",
+                "fontSize": 36,
+                "color": "#FFFFFF",
+                "fontFamily": "Georgia, serif",
+                "textAlign": "center",
+                "padding": "0 20px"
+              },
+              "styles": {},
+              "parentId": "preset-hero-image-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-hero-image-spacer-2",
+              "type": "spacer",
+              "props": {"height": "8px"},
+              "styles": {},
+              "parentId": "preset-hero-image-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-hero-image-subtitle",
+              "type": "text",
+              "props": {
+                "content": "{{subtitle}}",
+                "fontSize": 16,
+                "color": "#CCCCCC",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 40px 20px"
+              },
+              "styles": {},
+              "parentId": "preset-hero-image-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-hero-image-button",
+              "type": "button",
+              "props": {
+                "text": "{{buttonText}}",
+                "href": "{{buttonUrl}}",
+                "backgroundColor": "#FFFFFF",
+                "color": "{{backgroundColor}}",
+                "padding": "14px 36px",
+                "borderRadius": "6px",
+                "fontSize": 16,
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "preset-hero-image-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-hero-image-spacer-3",
+              "type": "spacer",
+              "props": {"height": "30px"},
+              "styles": {},
+              "parentId": "preset-hero-image-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "heroImage": {"type": "url", "default": "https://placehold.co/600x300/1a1a2e/ffffff?text=Hero+Image", "label": "Hero Image URL"},
+    "headline": {"type": "string", "default": "Stunning Visual Impact", "label": "Headline"},
+    "subtitle": {"type": "string", "default": "Pair your hero image with a compelling message that drives readers to take action.", "label": "Subtitle"},
+    "buttonText": {"type": "string", "default": "Learn More", "label": "Button Text"},
+    "buttonUrl": {"type": "string", "default": "https://example.com", "label": "Button URL"},
+    "backgroundColor": {"type": "color", "default": "#1a1a2e", "label": "Background Color"}
+  }
+}

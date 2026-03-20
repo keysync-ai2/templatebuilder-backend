@@ -2,27 +2,22 @@
 
 GET  /api/presets             — List presets (optional ?category= filter)
 GET  /api/presets/{id}        — Get preset with full component tree
+
+Public endpoints — no auth required (presets are shared resources).
 """
 
 import json
 from utils.response import success, error, options_response
-from utils.auth import verify_token
-from config.database import get_session
-from services.preset_service import list_presets, get_preset
+from engine.presets import local_preset_loader
 
 
 def handler(event, context):
     method = event["httpMethod"]
     path = event["path"]
-    headers = event.get("headers") or {}
     qs = event.get("queryStringParameters") or {}
 
     if method == "OPTIONS":
         return options_response()
-
-    payload = verify_token(headers)
-    if not payload:
-        return error(401, "UNAUTHORIZED", "Invalid or missing token")
 
     if path == "/api/presets" and method == "GET":
         return _list(qs.get("category"))
@@ -35,20 +30,18 @@ def handler(event, context):
 
 
 def _list(category: str | None):
-    session = get_session()
     try:
-        presets = list_presets(session, category)
+        presets = local_preset_loader("__list__", category=category)
         return success(200, {"presets": presets})
-    finally:
-        session.close()
+    except Exception as e:
+        return error(500, "INTERNAL_ERROR", str(e))
 
 
 def _get(preset_id: str):
-    session = get_session()
     try:
-        preset = get_preset(session, preset_id)
-        if not preset:
-            return error(404, "NOT_FOUND", "Preset not found")
-        return success(200, preset)
-    finally:
-        session.close()
+        preset = local_preset_loader(preset_id)
+        return success(200, {"preset": preset})
+    except ValueError as e:
+        return error(404, "NOT_FOUND", str(e))
+    except Exception as e:
+        return error(500, "INTERNAL_ERROR", str(e))

@@ -1,0 +1,215 @@
+{
+  "preset_id": "product-2col",
+  "name": "2-Column Product Grid",
+  "description": "Side-by-side product cards with images, titles, prices, and buy buttons. Ideal for product showcases, new arrivals, and comparison layouts.",
+  "category": "product",
+  "tags": ["product", "grid", "ecommerce", "shop", "2-column"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "prod-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "prod-col-1",
+          "type": "column",
+          "props": {"width": "50%", "backgroundColor": "#FFFFFF", "padding": "15px"},
+          "styles": {},
+          "parentId": "prod-row",
+          "children": [
+            {
+              "id": "prod-img-1",
+              "type": "image",
+              "props": {
+                "src": "{{product1Image}}",
+                "alt": "{{product1Name}}",
+                "width": "100%",
+                "height": "auto"
+              },
+              "styles": {},
+              "parentId": "prod-col-1",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "prod-spacer-1",
+              "type": "spacer",
+              "props": {"height": "10px"},
+              "styles": {},
+              "parentId": "prod-col-1",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "prod-name-1",
+              "type": "heading",
+              "props": {
+                "content": "{{product1Name}}",
+                "level": "h3",
+                "fontSize": 18,
+                "color": "#1a1a1a",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "5px"
+              },
+              "styles": {},
+              "parentId": "prod-col-1",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "prod-price-1",
+              "type": "text",
+              "props": {
+                "content": "{{product1Price}}",
+                "fontSize": 20,
+                "color": "{{accentColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 5px 10px"
+              },
+              "styles": {},
+              "parentId": "prod-col-1",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "prod-btn-1",
+              "type": "button",
+              "props": {
+                "text": "Buy Now",
+                "href": "{{product1Url}}",
+                "backgroundColor": "{{accentColor}}",
+                "color": "#FFFFFF",
+                "padding": "10px 24px",
+                "borderRadius": "4px",
+                "fontSize": 14,
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "prod-col-1",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        },
+        {
+          "id": "prod-col-2",
+          "type": "column",
+          "props": {"width": "50%", "backgroundColor": "#FFFFFF", "padding": "15px"},
+          "styles": {},
+          "parentId": "prod-row",
+          "children": [
+            {
+              "id": "prod-img-2",
+              "type": "image",
+              "props": {
+                "src": "{{product2Image}}",
+                "alt": "{{product2Name}}",
+                "width": "100%",
+                "height": "auto"
+              },
+              "styles": {},
+              "parentId": "prod-col-2",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "prod-spacer-2",
+              "type": "spacer",
+              "props": {"height": "10px"},
+              "styles": {},
+              "parentId": "prod-col-2",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "prod-name-2",
+              "type": "heading",
+              "props": {
+                "content": "{{product2Name}}",
+                "level": "h3",
+                "fontSize": 18,
+                "color": "#1a1a1a",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "5px"
+              },
+              "styles": {},
+              "parentId": "prod-col-2",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "prod-price-2",
+              "type": "text",
+              "props": {
+                "content": "{{product2Price}}",
+                "fontSize": 20,
+                "color": "{{accentColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 5px 10px"
+              },
+              "styles": {},
+              "parentId": "prod-col-2",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "prod-btn-2",
+              "type": "button",
+              "props": {
+                "text": "Buy Now",
+                "href": "{{product2Url}}",
+                "backgroundColor": "{{accentColor}}",
+                "color": "#FFFFFF",
+                "padding": "10px 24px",
+                "borderRadius": "4px",
+                "fontSize": 14,
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "prod-col-2",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "backgroundColor": {"type": "color", "default": "#F5F5F5", "label": "Background Color"},
+    "accentColor": {"type": "color", "default": "#E91E63", "label": "Accent Color"},
+    "product1Name": {"type": "string", "default": "Product One", "label": "Product 1 Name"},
+    "product1Price": {"type": "string", "default": "$49.99", "label": "Product 1 Price"},
+    "product1Image": {"type": "string", "default": "https://placehold.co/280x280/e2e8f0/64748b?text=Product+1", "label": "Product 1 Image URL"},
+    "product1Url": {"type": "string", "default": "https://example.com/product1", "label": "Product 1 URL"},
+    "product2Name": {"type": "string", "default": "Product Two", "label": "Product 2 Name"},
+    "product2Price": {"type": "string", "default": "$59.99", "label": "Product 2 Price"},
+    "product2Image": {"type": "string", "default": "https://placehold.co/280x280/e2e8f0/64748b?text=Product+2", "label": "Product 2 Image URL"},
+    "product2Url": {"type": "string", "default": "https://example.com/product2", "label": "Product 2 URL"}
+  }
+}

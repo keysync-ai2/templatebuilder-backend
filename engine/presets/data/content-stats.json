@@ -1,0 +1,169 @@
+{
+  "preset_id": "content-stats",
+  "name": "Stats Section",
+  "description": "Three-column statistics block with large numbers and labels. Great for showcasing key metrics and achievements.",
+  "category": "content",
+  "tags": ["stats", "metrics", "numbers", "data", "columns"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "preset-stats-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-stats-col1",
+          "type": "column",
+          "props": {"width": "33.33%", "backgroundColor": "{{backgroundColor}}", "padding": "30px 10px"},
+          "styles": {},
+          "parentId": "preset-stats-row",
+          "children": [
+            {
+              "id": "preset-stats-value1",
+              "type": "heading",
+              "props": {
+                "content": "<strong>{{stat1Value}}</strong>",
+                "level": "h2",
+                "fontSize": 36,
+                "color": "{{accentColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 0 5px"
+              },
+              "styles": {},
+              "parentId": "preset-stats-col1",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-stats-label1",
+              "type": "text",
+              "props": {
+                "content": "{{stat1Label}}",
+                "fontSize": 13,
+                "color": "#888888",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 5px"
+              },
+              "styles": {},
+              "parentId": "preset-stats-col1",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        },
+        {
+          "id": "preset-stats-col2",
+          "type": "column",
+          "props": {"width": "33.33%", "backgroundColor": "{{backgroundColor}}", "padding": "30px 10px"},
+          "styles": {},
+          "parentId": "preset-stats-row",
+          "children": [
+            {
+              "id": "preset-stats-value2",
+              "type": "heading",
+              "props": {
+                "content": "<strong>{{stat2Value}}</strong>",
+                "level": "h2",
+                "fontSize": 36,
+                "color": "{{accentColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 0 5px"
+              },
+              "styles": {},
+              "parentId": "preset-stats-col2",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-stats-label2",
+              "type": "text",
+              "props": {
+                "content": "{{stat2Label}}",
+                "fontSize": 13,
+                "color": "#888888",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 5px"
+              },
+              "styles": {},
+              "parentId": "preset-stats-col2",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        },
+        {
+          "id": "preset-stats-col3",
+          "type": "column",
+          "props": {"width": "33.33%", "backgroundColor": "{{backgroundColor}}", "padding": "30px 10px"},
+          "styles": {},
+          "parentId": "preset-stats-row",
+          "children": [
+            {
+              "id": "preset-stats-value3",
+              "type": "heading",
+              "props": {
+                "content": "<strong>{{stat3Value}}</strong>",
+                "level": "h2",
+                "fontSize": 36,
+                "color": "{{accentColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 0 5px"
+              },
+              "styles": {},
+              "parentId": "preset-stats-col3",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-stats-label3",
+              "type": "text",
+              "props": {
+                "content": "{{stat3Label}}",
+                "fontSize": 13,
+                "color": "#888888",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 5px"
+              },
+              "styles": {},
+              "parentId": "preset-stats-col3",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "stat1Value": {"type": "string", "default": "99%", "label": "Stat 1 Value"},
+    "stat1Label": {"type": "string", "default": "Uptime", "label": "Stat 1 Label"},
+    "stat2Value": {"type": "string", "default": "10K+", "label": "Stat 2 Value"},
+    "stat2Label": {"type": "string", "default": "Users", "label": "Stat 2 Label"},
+    "stat3Value": {"type": "string", "default": "24/7", "label": "Stat 3 Value"},
+    "stat3Label": {"type": "string", "default": "Support", "label": "Stat 3 Label"},
+    "accentColor": {"type": "color", "default": "#2563EB", "label": "Accent Color"},
+    "backgroundColor": {"type": "color", "default": "#FFFFFF", "label": "Background Color"}
+  }
+}

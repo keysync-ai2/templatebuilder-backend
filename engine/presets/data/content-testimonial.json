@@ -1,0 +1,106 @@
+{
+  "preset_id": "content-testimonial",
+  "name": "Customer Testimonial",
+  "description": "Customer testimonial block with italic quote, divider, and author attribution. Subtle accent styling for visual impact.",
+  "category": "content",
+  "tags": ["testimonial", "quote", "social-proof", "review"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "preset-testimonial-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-testimonial-col",
+          "type": "column",
+          "props": {"width": "100%", "backgroundColor": "{{backgroundColor}}", "padding": "30px 40px", "borderLeft": "4px solid {{accentColor}}"},
+          "styles": {},
+          "parentId": "preset-testimonial-row",
+          "children": [
+            {
+              "id": "preset-testimonial-quote",
+              "type": "text",
+              "props": {
+                "content": "<em style=\"font-size:18px;line-height:1.6;\">\"{{quote}}\"</em>",
+                "fontSize": 18,
+                "color": "{{textColor}}",
+                "fontFamily": "Georgia, serif",
+                "textAlign": "left",
+                "padding": "10px 0 15px"
+              },
+              "styles": {},
+              "parentId": "preset-testimonial-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-testimonial-divider",
+              "type": "divider",
+              "props": {
+                "borderColor": "{{accentColor}}",
+                "borderWidth": "2px",
+                "margin": "5px 0",
+                "width": "60px"
+              },
+              "styles": {},
+              "parentId": "preset-testimonial-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-testimonial-author",
+              "type": "text",
+              "props": {
+                "content": "<strong>{{authorName}}</strong>",
+                "fontSize": 14,
+                "color": "{{textColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "left",
+                "padding": "10px 0 0"
+              },
+              "styles": {},
+              "parentId": "preset-testimonial-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-testimonial-role",
+              "type": "text",
+              "props": {
+                "content": "{{authorRole}}",
+                "fontSize": 13,
+                "color": "#777777",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "left",
+                "padding": "2px 0 10px"
+              },
+              "styles": {},
+              "parentId": "preset-testimonial-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "quote": {"type": "string", "default": "This product completely transformed our workflow. The team has never been more productive.", "label": "Quote Text"},
+    "authorName": {"type": "string", "default": "Jane Doe", "label": "Author Name"},
+    "authorRole": {"type": "string", "default": "VP of Operations, Acme Corp", "label": "Author Role / Company"},
+    "accentColor": {"type": "color", "default": "#2563EB", "label": "Accent Color"},
+    "backgroundColor": {"type": "color", "default": "#F8F9FA", "label": "Background Color"},
+    "textColor": {"type": "color", "default": "#333333", "label": "Text Color"}
+  }
+}

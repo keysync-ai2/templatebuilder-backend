@@ -1,0 +1,97 @@
+{
+  "preset_id": "countdown-urgency",
+  "name": "Urgency Block",
+  "description": "Urgency-driven content block with bold heading, supporting text, and prominent CTA button. Uses urgent red/orange accents to create a sense of time pressure.",
+  "category": "content",
+  "tags": ["urgency", "countdown", "limited-time", "cta", "scarcity"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "preset-urgency-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-urgency-col",
+          "type": "column",
+          "props": {"width": "100%", "backgroundColor": "{{backgroundColor}}", "padding": "35px 40px"},
+          "styles": {},
+          "parentId": "preset-urgency-row",
+          "children": [
+            {
+              "id": "preset-urgency-heading",
+              "type": "heading",
+              "props": {
+                "content": "<strong>{{heading}}</strong>",
+                "level": "h2",
+                "fontSize": 28,
+                "color": "{{urgentColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 0 10px"
+              },
+              "styles": {},
+              "parentId": "preset-urgency-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-urgency-body",
+              "type": "text",
+              "props": {
+                "content": "{{bodyText}}",
+                "fontSize": 16,
+                "color": "{{textColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "lineHeight": "1.5",
+                "padding": "5px 20px 25px"
+              },
+              "styles": {},
+              "parentId": "preset-urgency-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-urgency-button",
+              "type": "button",
+              "props": {
+                "text": "{{buttonText}}",
+                "url": "{{buttonUrl}}",
+                "backgroundColor": "{{urgentColor}}",
+                "color": "#FFFFFF",
+                "fontSize": 17,
+                "fontFamily": "Arial, sans-serif",
+                "padding": "15px 40px",
+                "borderRadius": "6px",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "preset-urgency-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "heading": {"type": "string", "default": "Don't Miss Out!", "label": "Heading"},
+    "bodyText": {"type": "string", "default": "This offer expires soon. Act now before it's too late.", "label": "Body Text"},
+    "buttonText": {"type": "string", "default": "Claim Your Offer", "label": "Button Text"},
+    "buttonUrl": {"type": "string", "default": "#", "label": "Button URL"},
+    "urgentColor": {"type": "color", "default": "#DC2626", "label": "Urgent Color"},
+    "backgroundColor": {"type": "color", "default": "#FEF2F2", "label": "Background Color"},
+    "textColor": {"type": "color", "default": "#991B1B", "label": "Text Color"}
+  }
+}

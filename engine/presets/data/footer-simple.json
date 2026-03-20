@@ -1,0 +1,107 @@
+{
+  "preset_id": "footer-simple",
+  "name": "Simple Footer",
+  "description": "Clean footer with company name, address, and unsubscribe link. Required for CAN-SPAM compliance.",
+  "category": "footer",
+  "tags": ["footer", "unsubscribe", "legal", "compliance"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "footer-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "footer-col",
+          "type": "column",
+          "props": {"width": "100%", "backgroundColor": "{{backgroundColor}}", "padding": "10px 20px"},
+          "styles": {},
+          "parentId": "footer-row",
+          "children": [
+            {
+              "id": "footer-divider",
+              "type": "divider",
+              "props": {
+                "borderColor": "{{dividerColor}}",
+                "borderWidth": "1px",
+                "margin": "10px 0"
+              },
+              "styles": {},
+              "parentId": "footer-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "footer-company",
+              "type": "text",
+              "props": {
+                "content": "<strong>{{companyName}}</strong>",
+                "fontSize": 13,
+                "color": "{{textColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "10px 20px 2px"
+              },
+              "styles": {},
+              "parentId": "footer-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "footer-address",
+              "type": "text",
+              "props": {
+                "content": "{{address}}",
+                "fontSize": 12,
+                "color": "{{mutedColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 20px 10px"
+              },
+              "styles": {},
+              "parentId": "footer-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "footer-unsub",
+              "type": "text",
+              "props": {
+                "content": "You received this email because you signed up at {{companyName}}. <a href=\"{{unsubscribeUrl}}\" style=\"color:{{linkColor}};\">Unsubscribe</a>",
+                "fontSize": 11,
+                "color": "{{mutedColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "5px 20px 15px"
+              },
+              "styles": {},
+              "parentId": "footer-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "backgroundColor": {"type": "color", "default": "#1a1a2e", "label": "Background Color"},
+    "textColor": {"type": "color", "default": "#999999", "label": "Text Color"},
+    "mutedColor": {"type": "color", "default": "#666666", "label": "Muted Text Color"},
+    "dividerColor": {"type": "color", "default": "#333355", "label": "Divider Color"},
+    "linkColor": {"type": "color", "default": "#4A90D9", "label": "Link Color"},
+    "companyName": {"type": "string", "default": "Your Company", "label": "Company Name"},
+    "address": {"type": "string", "default": "123 Main St, Suite 100, San Francisco, CA 94105", "label": "Address"},
+    "unsubscribeUrl": {"type": "string", "default": "#unsubscribe", "label": "Unsubscribe URL"}
+  }
+}

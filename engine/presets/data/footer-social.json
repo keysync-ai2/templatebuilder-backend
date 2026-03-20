@@ -1,0 +1,125 @@
+{
+  "preset_id": "footer-social",
+  "name": "Social Footer",
+  "description": "Footer with social media text links, company info, address, and unsubscribe link. Social links displayed as plain text for maximum email client compatibility.",
+  "category": "footer",
+  "tags": ["footer", "social", "twitter", "linkedin", "instagram", "unsubscribe"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "preset-social-footer-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-social-footer-col",
+          "type": "column",
+          "props": {"width": "100%", "backgroundColor": "{{backgroundColor}}", "padding": "25px 20px"},
+          "styles": {},
+          "parentId": "preset-social-footer-row",
+          "children": [
+            {
+              "id": "preset-social-footer-links",
+              "type": "text",
+              "props": {
+                "content": "<a href=\"{{twitterUrl}}\" style=\"color:{{linkColor}};text-decoration:none;\">Twitter</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href=\"{{linkedinUrl}}\" style=\"color:{{linkColor}};text-decoration:none;\">LinkedIn</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href=\"{{instagramUrl}}\" style=\"color:{{linkColor}};text-decoration:none;\">Instagram</a>",
+                "fontSize": 13,
+                "color": "{{linkColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "10px 20px 15px"
+              },
+              "styles": {},
+              "parentId": "preset-social-footer-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-social-footer-divider",
+              "type": "divider",
+              "props": {
+                "borderColor": "#333355",
+                "borderWidth": "1px",
+                "margin": "5px 0"
+              },
+              "styles": {},
+              "parentId": "preset-social-footer-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-social-footer-company",
+              "type": "text",
+              "props": {
+                "content": "<strong>{{companyName}}</strong>",
+                "fontSize": 13,
+                "color": "{{textColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "15px 20px 2px"
+              },
+              "styles": {},
+              "parentId": "preset-social-footer-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-social-footer-address",
+              "type": "text",
+              "props": {
+                "content": "{{address}}",
+                "fontSize": 12,
+                "color": "#666666",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 20px 10px"
+              },
+              "styles": {},
+              "parentId": "preset-social-footer-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-social-footer-unsub",
+              "type": "text",
+              "props": {
+                "content": "<a href=\"{{unsubscribeUrl}}\" style=\"color:{{linkColor}};text-decoration:underline;\">Unsubscribe</a>",
+                "fontSize": 11,
+                "color": "#666666",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "5px 20px 15px"
+              },
+              "styles": {},
+              "parentId": "preset-social-footer-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "companyName": {"type": "string", "default": "Your Company", "label": "Company Name"},
+    "address": {"type": "string", "default": "123 Main St, Suite 100, San Francisco, CA 94105", "label": "Address"},
+    "unsubscribeUrl": {"type": "string", "default": "#unsubscribe", "label": "Unsubscribe URL"},
+    "twitterUrl": {"type": "string", "default": "#", "label": "Twitter URL"},
+    "linkedinUrl": {"type": "string", "default": "#", "label": "LinkedIn URL"},
+    "instagramUrl": {"type": "string", "default": "#", "label": "Instagram URL"},
+    "backgroundColor": {"type": "color", "default": "#1a1a2e", "label": "Background Color"},
+    "textColor": {"type": "color", "default": "#999999", "label": "Text Color"},
+    "linkColor": {"type": "color", "default": "#4A90D9", "label": "Link Color"}
+  }
+}

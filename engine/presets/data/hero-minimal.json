@@ -1,0 +1,84 @@
+{
+  "preset_id": "hero-minimal",
+  "name": "Minimal Hero Section",
+  "description": "Clean and elegant hero with a centered heading and body text. No buttons or images — just focused, minimal typography on a light background.",
+  "category": "hero",
+  "tags": ["hero", "minimal", "clean", "text", "elegant"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "preset-hero-minimal-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-hero-minimal-col",
+          "type": "column",
+          "props": {"width": "100%", "backgroundColor": "{{backgroundColor}}", "padding": "50px 20px"},
+          "styles": {},
+          "parentId": "preset-hero-minimal-row",
+          "children": [
+            {
+              "id": "preset-hero-minimal-heading",
+              "type": "heading",
+              "props": {
+                "content": "{{headline}}",
+                "level": "h2",
+                "fontSize": 28,
+                "color": "{{textColor}}",
+                "fontFamily": "Georgia, serif",
+                "textAlign": "center",
+                "padding": "10px 40px"
+              },
+              "styles": {},
+              "parentId": "preset-hero-minimal-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-hero-minimal-spacer",
+              "type": "spacer",
+              "props": {"height": "12px"},
+              "styles": {},
+              "parentId": "preset-hero-minimal-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-hero-minimal-text",
+              "type": "text",
+              "props": {
+                "content": "{{bodyText}}",
+                "fontSize": 16,
+                "color": "{{textColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 60px 10px",
+                "lineHeight": "1.6"
+              },
+              "styles": {},
+              "parentId": "preset-hero-minimal-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "headline": {"type": "string", "default": "Simple. Elegant. Effective.", "label": "Headline"},
+    "bodyText": {"type": "string", "default": "Sometimes less is more. Let your words speak for themselves with a clean, distraction-free layout that puts your message front and center.", "label": "Body Text"},
+    "textColor": {"type": "color", "default": "#333333", "label": "Text Color"},
+    "backgroundColor": {"type": "color", "default": "#FFFFFF", "label": "Background Color"}
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "preset_id": "content-text-image",
+  "name": "Text & Image Content Block",
+  "description": "Two-column layout with heading and body text on the left and a supporting image on the right. Great for feature highlights, about sections, and content blocks.",
+  "category": "content",
+  "tags": ["content", "text", "image", "2-column", "feature"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "preset-content-text-image-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "20px"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-content-text-image-col-left",
+          "type": "column",
+          "props": {"width": "50%", "backgroundColor": "{{backgroundColor}}", "padding": "20px"},
+          "styles": {},
+          "parentId": "preset-content-text-image-row",
+          "children": [
+            {
+              "id": "preset-content-text-image-heading",
+              "type": "heading",
+              "props": {
+                "content": "{{heading}}",
+                "level": "h2",
+                "fontSize": 24,
+                "color": "{{textColor}}",
+                "fontFamily": "Georgia, serif",
+                "textAlign": "left",
+                "padding": "0 0 10px"
+              },
+              "styles": {},
+              "parentId": "preset-content-text-image-col-left",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-content-text-image-body",
+              "type": "text",
+              "props": {
+                "content": "{{bodyText}}",
+                "fontSize": 15,
+                "color": "{{textColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "left",
+                "lineHeight": "1.6",
+                "padding": "0"
+              },
+              "styles": {},
+              "parentId": "preset-content-text-image-col-left",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        },
+        {
+          "id": "preset-content-text-image-col-right",
+          "type": "column",
+          "props": {"width": "50%", "backgroundColor": "{{backgroundColor}}", "padding": "10px"},
+          "styles": {},
+          "parentId": "preset-content-text-image-row",
+          "children": [
+            {
+              "id": "preset-content-text-image-img",
+              "type": "image",
+              "props": {
+                "src": "{{image}}",
+                "alt": "Content image",
+                "width": "100%",
+                "padding": "0"
+              },
+              "styles": {},
+              "parentId": "preset-content-text-image-col-right",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "heading": {"type": "string", "default": "Why Choose Us", "label": "Heading"},
+    "bodyText": {"type": "string", "default": "We combine innovation with reliability to deliver solutions that truly make a difference. Our team is dedicated to helping you succeed every step of the way.", "label": "Body Text"},
+    "image": {"type": "url", "default": "https://placehold.co/300x250/e2e8f0/1a1a1a?text=Feature+Image", "label": "Image URL"},
+    "textColor": {"type": "color", "default": "#1a1a1a", "label": "Text Color"},
+    "backgroundColor": {"type": "color", "default": "#FFFFFF", "label": "Background Color"}
+  }
+}

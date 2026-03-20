@@ -1,0 +1,113 @@
+{
+  "preset_id": "coupon-banner",
+  "name": "Coupon Banner",
+  "description": "Promotional coupon block with heading, dashed coupon code box, expiry text, and call-to-action button. Perfect for discount and sale campaigns.",
+  "category": "content",
+  "tags": ["coupon", "promo", "discount", "sale", "offer", "banner"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "preset-coupon-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-coupon-col",
+          "type": "column",
+          "props": {"width": "100%", "backgroundColor": "{{backgroundColor}}", "padding": "30px 40px"},
+          "styles": {},
+          "parentId": "preset-coupon-row",
+          "children": [
+            {
+              "id": "preset-coupon-heading",
+              "type": "heading",
+              "props": {
+                "content": "{{heading}}",
+                "level": "h2",
+                "fontSize": 26,
+                "color": "{{accentColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 0 15px"
+              },
+              "styles": {},
+              "parentId": "preset-coupon-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-coupon-code",
+              "type": "text",
+              "props": {
+                "content": "<span style=\"display:inline-block;padding:12px 30px;border:2px dashed {{accentColor}};font-size:22px;font-weight:bold;letter-spacing:3px;color:{{accentColor}};\">{{couponCode}}</span>",
+                "fontSize": 22,
+                "color": "{{accentColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "10px 0 15px"
+              },
+              "styles": {},
+              "parentId": "preset-coupon-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-coupon-expiry",
+              "type": "text",
+              "props": {
+                "content": "{{expiryText}}",
+                "fontSize": 13,
+                "color": "#888888",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 0 20px"
+              },
+              "styles": {},
+              "parentId": "preset-coupon-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-coupon-button",
+              "type": "button",
+              "props": {
+                "text": "{{buttonText}}",
+                "url": "{{buttonUrl}}",
+                "backgroundColor": "{{accentColor}}",
+                "color": "#FFFFFF",
+                "fontSize": 16,
+                "fontFamily": "Arial, sans-serif",
+                "padding": "14px 35px",
+                "borderRadius": "6px",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "preset-coupon-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "heading": {"type": "string", "default": "Special Offer", "label": "Heading"},
+    "couponCode": {"type": "string", "default": "SAVE20", "label": "Coupon Code"},
+    "expiryText": {"type": "string", "default": "Expires March 31, 2026", "label": "Expiry Text"},
+    "buttonText": {"type": "string", "default": "Shop Now", "label": "Button Text"},
+    "buttonUrl": {"type": "string", "default": "#", "label": "Button URL"},
+    "accentColor": {"type": "color", "default": "#E91E63", "label": "Accent Color"},
+    "backgroundColor": {"type": "color", "default": "#FFF8F0", "label": "Background Color"}
+  }
+}

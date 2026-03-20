@@ -1,0 +1,141 @@
+{
+  "preset_id": "product-featured",
+  "name": "Featured Product Section",
+  "description": "Two-column layout with a large product image on the left and product details with a buy button on the right. Perfect for showcasing a featured or flagship product.",
+  "category": "product",
+  "tags": ["product", "featured", "2-column", "ecommerce", "cta"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "preset-product-featured-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "20px"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-product-featured-col-left",
+          "type": "column",
+          "props": {"width": "50%", "backgroundColor": "{{backgroundColor}}", "padding": "10px"},
+          "styles": {},
+          "parentId": "preset-product-featured-row",
+          "children": [
+            {
+              "id": "preset-product-featured-img",
+              "type": "image",
+              "props": {
+                "src": "{{productImage}}",
+                "alt": "Featured product",
+                "width": "100%",
+                "padding": "0"
+              },
+              "styles": {},
+              "parentId": "preset-product-featured-col-left",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        },
+        {
+          "id": "preset-product-featured-col-right",
+          "type": "column",
+          "props": {"width": "50%", "backgroundColor": "{{backgroundColor}}", "padding": "20px"},
+          "styles": {},
+          "parentId": "preset-product-featured-row",
+          "children": [
+            {
+              "id": "preset-product-featured-name",
+              "type": "heading",
+              "props": {
+                "content": "{{productName}}",
+                "level": "h2",
+                "fontSize": 26,
+                "color": "#1a1a1a",
+                "fontFamily": "Georgia, serif",
+                "textAlign": "left",
+                "padding": "0 0 8px"
+              },
+              "styles": {},
+              "parentId": "preset-product-featured-col-right",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-product-featured-desc",
+              "type": "text",
+              "props": {
+                "content": "{{description}}",
+                "fontSize": 14,
+                "color": "#555555",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "left",
+                "lineHeight": "1.6",
+                "padding": "0 0 16px"
+              },
+              "styles": {},
+              "parentId": "preset-product-featured-col-right",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-product-featured-price",
+              "type": "text",
+              "props": {
+                "content": "{{price}}",
+                "fontSize": 24,
+                "color": "#1a1a1a",
+                "fontFamily": "Arial, sans-serif",
+                "fontWeight": "bold",
+                "textAlign": "left",
+                "padding": "0 0 20px"
+              },
+              "styles": {},
+              "parentId": "preset-product-featured-col-right",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-product-featured-btn",
+              "type": "button",
+              "props": {
+                "text": "{{buttonText}}",
+                "href": "{{buttonUrl}}",
+                "backgroundColor": "#2563EB",
+                "color": "#FFFFFF",
+                "padding": "12px 32px",
+                "borderRadius": "6px",
+                "fontSize": 16,
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "preset-product-featured-col-right",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "productImage": {"type": "url", "default": "https://placehold.co/300x300/e2e8f0/1a1a1a?text=Product", "label": "Product Image"},
+    "productName": {"type": "string", "default": "Featured Product", "label": "Product Name"},
+    "description": {"type": "string", "default": "Discover our best-selling product. Premium quality materials and craftsmanship that you can see and feel in every detail.", "label": "Description"},
+    "price": {"type": "string", "default": "$99.99", "label": "Price"},
+    "buttonText": {"type": "string", "default": "Buy Now", "label": "Button Text"},
+    "buttonUrl": {"type": "string", "default": "https://example.com/product", "label": "Button URL"},
+    "backgroundColor": {"type": "color", "default": "#FFFFFF", "label": "Background Color"}
+  }
+}

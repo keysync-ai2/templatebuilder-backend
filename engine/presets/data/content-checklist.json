@@ -1,0 +1,128 @@
+{
+  "preset_id": "content-checklist",
+  "name": "Feature Checklist",
+  "description": "Feature checklist with heading and four items prefixed with green checkmarks. Clean, scannable layout for highlighting included features.",
+  "category": "content",
+  "tags": ["checklist", "features", "list", "benefits"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "preset-checklist-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-checklist-col",
+          "type": "column",
+          "props": {"width": "100%", "backgroundColor": "{{backgroundColor}}", "padding": "30px 40px"},
+          "styles": {},
+          "parentId": "preset-checklist-row",
+          "children": [
+            {
+              "id": "preset-checklist-heading",
+              "type": "heading",
+              "props": {
+                "content": "{{heading}}",
+                "level": "h2",
+                "fontSize": 24,
+                "color": "{{textColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "left",
+                "padding": "0 0 15px"
+              },
+              "styles": {},
+              "parentId": "preset-checklist-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-checklist-item1",
+              "type": "text",
+              "props": {
+                "content": "<span style=\"color:{{checkColor}};font-size:16px;\">&#10003;</span>&nbsp;&nbsp;{{item1}}",
+                "fontSize": 15,
+                "color": "{{textColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "left",
+                "padding": "8px 0"
+              },
+              "styles": {},
+              "parentId": "preset-checklist-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-checklist-item2",
+              "type": "text",
+              "props": {
+                "content": "<span style=\"color:{{checkColor}};font-size:16px;\">&#10003;</span>&nbsp;&nbsp;{{item2}}",
+                "fontSize": 15,
+                "color": "{{textColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "left",
+                "padding": "8px 0"
+              },
+              "styles": {},
+              "parentId": "preset-checklist-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-checklist-item3",
+              "type": "text",
+              "props": {
+                "content": "<span style=\"color:{{checkColor}};font-size:16px;\">&#10003;</span>&nbsp;&nbsp;{{item3}}",
+                "fontSize": 15,
+                "color": "{{textColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "left",
+                "padding": "8px 0"
+              },
+              "styles": {},
+              "parentId": "preset-checklist-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-checklist-item4",
+              "type": "text",
+              "props": {
+                "content": "<span style=\"color:{{checkColor}};font-size:16px;\">&#10003;</span>&nbsp;&nbsp;{{item4}}",
+                "fontSize": 15,
+                "color": "{{textColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "left",
+                "padding": "8px 0"
+              },
+              "styles": {},
+              "parentId": "preset-checklist-col",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "heading": {"type": "string", "default": "What's Included", "label": "Heading"},
+    "item1": {"type": "string", "default": "Feature one description", "label": "Item 1"},
+    "item2": {"type": "string", "default": "Feature two description", "label": "Item 2"},
+    "item3": {"type": "string", "default": "Feature three description", "label": "Item 3"},
+    "item4": {"type": "string", "default": "Feature four description", "label": "Item 4"},
+    "checkColor": {"type": "color", "default": "#22C55E", "label": "Checkmark Color"},
+    "backgroundColor": {"type": "color", "default": "#FFFFFF", "label": "Background Color"},
+    "textColor": {"type": "color", "default": "#333333", "label": "Text Color"}
+  }
+}

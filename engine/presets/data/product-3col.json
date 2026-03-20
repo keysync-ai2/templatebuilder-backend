@@ -1,0 +1,283 @@
+{
+  "preset_id": "product-3col",
+  "name": "Three-Column Product Grid",
+  "description": "A three-column product showcase with image, name, price, and shop button for each product. Ideal for featuring multiple products side by side.",
+  "category": "product",
+  "tags": ["product", "grid", "3-column", "shop", "ecommerce"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "preset-product-3col-row",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "20px 10px"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-product-3col-col1",
+          "type": "column",
+          "props": {"width": "33.33%", "backgroundColor": "{{backgroundColor}}", "padding": "10px"},
+          "styles": {},
+          "parentId": "preset-product-3col-row",
+          "children": [
+            {
+              "id": "preset-product-3col-img1",
+              "type": "image",
+              "props": {
+                "src": "{{product1Image}}",
+                "alt": "Product 1",
+                "width": "100%",
+                "padding": "0 0 10px"
+              },
+              "styles": {},
+              "parentId": "preset-product-3col-col1",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-product-3col-name1",
+              "type": "heading",
+              "props": {
+                "content": "{{product1Name}}",
+                "level": "h3",
+                "fontSize": 18,
+                "color": "#1a1a1a",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "5px 0"
+              },
+              "styles": {},
+              "parentId": "preset-product-3col-col1",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-product-3col-price1",
+              "type": "text",
+              "props": {
+                "content": "{{product1Price}}",
+                "fontSize": 16,
+                "color": "{{accentColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "fontWeight": "bold",
+                "padding": "0 0 10px"
+              },
+              "styles": {},
+              "parentId": "preset-product-3col-col1",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-product-3col-btn1",
+              "type": "button",
+              "props": {
+                "text": "Shop Now",
+                "href": "{{product1Url}}",
+                "backgroundColor": "{{accentColor}}",
+                "color": "#FFFFFF",
+                "padding": "10px 24px",
+                "borderRadius": "4px",
+                "fontSize": 14,
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "preset-product-3col-col1",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        },
+        {
+          "id": "preset-product-3col-col2",
+          "type": "column",
+          "props": {"width": "33.33%", "backgroundColor": "{{backgroundColor}}", "padding": "10px"},
+          "styles": {},
+          "parentId": "preset-product-3col-row",
+          "children": [
+            {
+              "id": "preset-product-3col-img2",
+              "type": "image",
+              "props": {
+                "src": "{{product2Image}}",
+                "alt": "Product 2",
+                "width": "100%",
+                "padding": "0 0 10px"
+              },
+              "styles": {},
+              "parentId": "preset-product-3col-col2",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-product-3col-name2",
+              "type": "heading",
+              "props": {
+                "content": "{{product2Name}}",
+                "level": "h3",
+                "fontSize": 18,
+                "color": "#1a1a1a",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "5px 0"
+              },
+              "styles": {},
+              "parentId": "preset-product-3col-col2",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-product-3col-price2",
+              "type": "text",
+              "props": {
+                "content": "{{product2Price}}",
+                "fontSize": 16,
+                "color": "{{accentColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "fontWeight": "bold",
+                "padding": "0 0 10px"
+              },
+              "styles": {},
+              "parentId": "preset-product-3col-col2",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-product-3col-btn2",
+              "type": "button",
+              "props": {
+                "text": "Shop Now",
+                "href": "{{product2Url}}",
+                "backgroundColor": "{{accentColor}}",
+                "color": "#FFFFFF",
+                "padding": "10px 24px",
+                "borderRadius": "4px",
+                "fontSize": 14,
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "preset-product-3col-col2",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        },
+        {
+          "id": "preset-product-3col-col3",
+          "type": "column",
+          "props": {"width": "33.33%", "backgroundColor": "{{backgroundColor}}", "padding": "10px"},
+          "styles": {},
+          "parentId": "preset-product-3col-row",
+          "children": [
+            {
+              "id": "preset-product-3col-img3",
+              "type": "image",
+              "props": {
+                "src": "{{product3Image}}",
+                "alt": "Product 3",
+                "width": "100%",
+                "padding": "0 0 10px"
+              },
+              "styles": {},
+              "parentId": "preset-product-3col-col3",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-product-3col-name3",
+              "type": "heading",
+              "props": {
+                "content": "{{product3Name}}",
+                "level": "h3",
+                "fontSize": 18,
+                "color": "#1a1a1a",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "5px 0"
+              },
+              "styles": {},
+              "parentId": "preset-product-3col-col3",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-product-3col-price3",
+              "type": "text",
+              "props": {
+                "content": "{{product3Price}}",
+                "fontSize": 16,
+                "color": "{{accentColor}}",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "fontWeight": "bold",
+                "padding": "0 0 10px"
+              },
+              "styles": {},
+              "parentId": "preset-product-3col-col3",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-product-3col-btn3",
+              "type": "button",
+              "props": {
+                "text": "Shop Now",
+                "href": "{{product3Url}}",
+                "backgroundColor": "{{accentColor}}",
+                "color": "#FFFFFF",
+                "padding": "10px 24px",
+                "borderRadius": "4px",
+                "fontSize": 14,
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "preset-product-3col-col3",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "backgroundColor": {"type": "color", "default": "#F9FAFB", "label": "Background Color"},
+    "accentColor": {"type": "color", "default": "#2563EB", "label": "Accent Color"},
+    "product1Name": {"type": "string", "default": "Product One", "label": "Product 1 Name"},
+    "product1Price": {"type": "string", "default": "$49.99", "label": "Product 1 Price"},
+    "product1Image": {"type": "url", "default": "https://placehold.co/200x200/e2e8f0/1a1a1a?text=Product+1", "label": "Product 1 Image"},
+    "product1Url": {"type": "string", "default": "https://example.com/product-1", "label": "Product 1 URL"},
+    "product2Name": {"type": "string", "default": "Product Two", "label": "Product 2 Name"},
+    "product2Price": {"type": "string", "default": "$59.99", "label": "Product 2 Price"},
+    "product2Image": {"type": "url", "default": "https://placehold.co/200x200/e2e8f0/1a1a1a?text=Product+2", "label": "Product 2 Image"},
+    "product2Url": {"type": "string", "default": "https://example.com/product-2", "label": "Product 2 URL"},
+    "product3Name": {"type": "string", "default": "Product Three", "label": "Product 3 Name"},
+    "product3Price": {"type": "string", "default": "$39.99", "label": "Product 3 Price"},
+    "product3Image": {"type": "url", "default": "https://placehold.co/200x200/e2e8f0/1a1a1a?text=Product+3", "label": "Product 3 Image"},
+    "product3Url": {"type": "string", "default": "https://example.com/product-3", "label": "Product 3 URL"}
+  }
+}

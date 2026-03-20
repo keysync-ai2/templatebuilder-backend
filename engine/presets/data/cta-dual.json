@@ -1,0 +1,151 @@
+{
+  "preset_id": "cta-dual",
+  "name": "Dual Button CTA",
+  "description": "Centered heading with supporting text and two side-by-side call-to-action buttons — a primary filled button and a secondary outline-style button.",
+  "category": "cta",
+  "tags": ["cta", "buttons", "dual", "action", "2-column"],
+  "version": "1.0",
+  "components": [
+    {
+      "id": "preset-cta-dual-row-header",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-cta-dual-col-header",
+          "type": "column",
+          "props": {"width": "100%", "backgroundColor": "{{backgroundColor}}", "padding": "30px 20px 10px"},
+          "styles": {},
+          "parentId": "preset-cta-dual-row-header",
+          "children": [
+            {
+              "id": "preset-cta-dual-heading",
+              "type": "heading",
+              "props": {
+                "content": "{{heading}}",
+                "level": "h2",
+                "fontSize": 28,
+                "color": "#1a1a1a",
+                "fontFamily": "Georgia, serif",
+                "textAlign": "center",
+                "padding": "0 20px 8px"
+              },
+              "styles": {},
+              "parentId": "preset-cta-dual-col-header",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            },
+            {
+              "id": "preset-cta-dual-support-text",
+              "type": "text",
+              "props": {
+                "content": "{{supportText}}",
+                "fontSize": 16,
+                "color": "#555555",
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center",
+                "padding": "0 40px 20px"
+              },
+              "styles": {},
+              "parentId": "preset-cta-dual-col-header",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    },
+    {
+      "id": "preset-cta-dual-row-buttons",
+      "type": "row",
+      "props": {"backgroundColor": "{{backgroundColor}}", "padding": "0 20px 30px"},
+      "styles": {},
+      "parentId": null,
+      "children": [
+        {
+          "id": "preset-cta-dual-col-primary",
+          "type": "column",
+          "props": {"width": "50%", "backgroundColor": "{{backgroundColor}}", "padding": "5px 10px"},
+          "styles": {},
+          "parentId": "preset-cta-dual-row-buttons",
+          "children": [
+            {
+              "id": "preset-cta-dual-btn-primary",
+              "type": "button",
+              "props": {
+                "text": "{{primaryText}}",
+                "href": "{{primaryUrl}}",
+                "backgroundColor": "{{primaryColor}}",
+                "color": "#FFFFFF",
+                "padding": "14px 28px",
+                "borderRadius": "6px",
+                "fontSize": 16,
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "preset-cta-dual-col-primary",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        },
+        {
+          "id": "preset-cta-dual-col-secondary",
+          "type": "column",
+          "props": {"width": "50%", "backgroundColor": "{{backgroundColor}}", "padding": "5px 10px"},
+          "styles": {},
+          "parentId": "preset-cta-dual-row-buttons",
+          "children": [
+            {
+              "id": "preset-cta-dual-btn-secondary",
+              "type": "button",
+              "props": {
+                "text": "{{secondaryText}}",
+                "href": "{{secondaryUrl}}",
+                "backgroundColor": "#E5E7EB",
+                "color": "{{secondaryColor}}",
+                "padding": "14px 28px",
+                "borderRadius": "6px",
+                "fontSize": 16,
+                "fontFamily": "Arial, sans-serif",
+                "textAlign": "center"
+              },
+              "styles": {},
+              "parentId": "preset-cta-dual-col-secondary",
+              "children": [],
+              "visibility": true,
+              "locked": false
+            }
+          ],
+          "visibility": true,
+          "locked": false
+        }
+      ],
+      "visibility": true,
+      "locked": false
+    }
+  ],
+  "variables": {
+    "heading": {"type": "string", "default": "Ready to Get Started?", "label": "Heading"},
+    "supportText": {"type": "string", "default": "Choose the option that works best for you. No commitment required.", "label": "Support Text"},
+    "primaryText": {"type": "string", "default": "Start Free Trial", "label": "Primary Button Text"},
+    "primaryUrl": {"type": "string", "default": "https://example.com/signup", "label": "Primary Button URL"},
+    "primaryColor": {"type": "color", "default": "#2563EB", "label": "Primary Button Color"},
+    "secondaryText": {"type": "string", "default": "Learn More", "label": "Secondary Button Text"},
+    "secondaryUrl": {"type": "string", "default": "https://example.com/learn", "label": "Secondary Button URL"},
+    "secondaryColor": {"type": "color", "default": "#6B7280", "label": "Secondary Button Color"},
+    "backgroundColor": {"type": "color", "default": "#F8F9FA", "label": "Background Color"}
+  }
+}
