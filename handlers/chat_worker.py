@@ -77,13 +77,26 @@ def handler(event, context):
 
         _update_status(task_id, "processing", "Saving your results...")
 
+        # Build enriched content for DB (includes tool summaries for history context)
+        enriched_content = result["content"] or ""
+        for w in result.get("widgets", []):
+            if w.get("type") == "suggestion-cards":
+                suggestions = w.get("data", {}).get("suggestions", [])
+                if suggestions:
+                    enriched_content += "\n\n[Suggested templates: "
+                    enriched_content += ", ".join(
+                        f"{i+1}. {s['name']} ({s['slug']}, {s['score']:.0%} match)"
+                        for i, s in enumerate(suggestions)
+                    )
+                    enriched_content += "]"
+
         # Save assistant message
         session = get_session()
         try:
             asst_msg = Message(
                 conversation_id=conversation_id,
                 role="assistant",
-                content=result["content"],
+                content=enriched_content,
                 widgets=result.get("widgets", []),
             )
             session.add(asst_msg)
