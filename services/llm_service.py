@@ -113,19 +113,18 @@ def _get_mcp_server():
     return _mcp_server
 
 
-def _get_all_tools():
-    """All tools: brand + suggest + MCP tools."""
-    tools = [BRAND_TOOL, SUGGEST_TOOL]
-    for tool in TOOLS:
-        tools.append({
-            "type": "function",
-            "function": {
-                "name": tool["name"],
-                "description": tool["description"],
-                "parameters": tool["inputSchema"],
-            },
-        })
-    return tools
+def _get_all_tools(user_id=None):
+    """All tools: built-in (brand + suggest) + dynamic MCP tools from registry."""
+    from services.tool_registry import ToolRegistry
+
+    registry = ToolRegistry(user_id)
+    registry.set_embedded_handler(_get_mcp_server().handle_tool_call)
+    registry.load_tools()
+
+    # Built-in tools (not from MCP servers)
+    builtin = [BRAND_TOOL, SUGGEST_TOOL]
+
+    return builtin, registry
 
 
 def _enrich_history(conversation_history):
@@ -159,8 +158,10 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None, u
         {"role": "assistant", "content": str, "widgets": list}
     """
     client = _get_client()
-    mcp = _get_mcp_server()
-    tools = _get_all_tools()
+    builtin_tools, registry = _get_all_tools(user_id)
+
+    # Combine built-in + MCP tools
+    all_tools = builtin_tools + registry.get_openai_tools()
 
     # Build message chain
     all_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
@@ -169,13 +170,13 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None, u
 
     widgets = []
     max_iterations = 10
-    brand_cache = {}  # Cache brand profile within this request
+    brand_cache = {}
 
     for iteration in range(max_iterations):
         response = client.chat.completions.create(
             model=MODEL,
             max_tokens=MAX_TOKENS,
-            tools=tools,
+            tools=all_tools if all_tools else None,
             messages=all_messages,
         )
 
@@ -303,12 +304,8 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None, u
                     })
                 continue
 
-            # ── MCP tools (build_email_html, validate, presets, etc.) ──
-            try:
-                result = mcp.handle_tool_call(fn_name, fn_args)
-            except Exception as e:
-                logger.warning(f"Tool {fn_name} failed: {e}")
-                result = {"error": str(e)}
+            # ── All other tools — route via ToolRegistry ──
+            result = registry.call_tool(fn_name, fn_args)
 
             all_messages.append({
                 "role": "tool",
@@ -316,8 +313,9 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None, u
                 "content": json.dumps(result, default=str),
             })
 
-            # Capture template widgets
-            if fn_name == "build_email_html" and "html" in result:
+            # Capture template widgets from build_email_html
+            actual_name = fn_name.split(":")[-1] if ":" in fn_name else fn_name
+            if actual_name == "build_email_html" and "html" in result:
                 widget = {
                     "type": "template-builder",
                     "data": {
