@@ -40,6 +40,11 @@ def handler(event, context):
     if path == "/api/chat" and method == "POST":
         return _submit_chat(body, user_id)
 
+    # POST /api/chat/command
+    if path == "/api/chat/command" and method == "POST":
+        from handlers.command import _handle_command
+        return _handle_command(body, user_id)
+
     # GET /api/chat/status/{task_id}
     parts = path.rstrip("/").split("/")
     if len(parts) == 5 and parts[3] == "status" and method == "GET":
