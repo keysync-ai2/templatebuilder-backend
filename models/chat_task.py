@@ -14,3 +14,4 @@ class ChatTask(Base, TimestampMixin):
     result_content = Column(Text, default="")  # assistant's text response
     result_widgets = Column(JSONB, default=list)  # assistant's widgets
     error_message = Column(Text, default="")
+    status_message = Column(String, default="")

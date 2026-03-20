@@ -123,6 +123,7 @@ def _poll_status(task_id: str, user_id: str):
             "task_id": task.id,
             "status": task.status,
             "conversation_id": task.conversation_id,
+            "status_message": task.status_message or "",
         }
 
         if task.status == "completed":

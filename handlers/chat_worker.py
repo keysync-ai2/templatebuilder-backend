@@ -1,8 +1,6 @@
 """Chat Worker Lambda — processes chat messages asynchronously.
 
-Invoked by chat.py via async Lambda invoke. Runs the LLM tool-call loop
-and writes the result back to the chat_tasks table.
-
+Updates status_message at each step so frontend can show progress.
 Timeout: 300s (5 minutes)
 """
 
@@ -17,8 +15,16 @@ from services.llm_service import chat
 logger = logging.getLogger(__name__)
 
 
+def _update_status(session, task_id, status, message=""):
+    """Update task status + status_message in DB."""
+    task = session.query(ChatTask).filter_by(id=task_id).first()
+    if task:
+        task.status = status
+        task.status_message = message
+        session.commit()
+
+
 def handler(event, context):
-    """Process a chat task. Event has: task_id, user_id, conversation_id, message."""
     task_id = event.get("task_id")
     user_id = event.get("user_id")
     conversation_id = event.get("conversation_id")
@@ -30,14 +36,8 @@ def handler(event, context):
 
     session = get_session()
     try:
-        # Mark as processing
-        task = session.query(ChatTask).filter_by(id=task_id).first()
-        if not task:
-            logger.error(f"Task {task_id} not found")
-            return
-
-        task.status = "processing"
-        session.commit()
+        # Step 1: Analyzing
+        _update_status(session, task_id, "processing", "Analyzing your request...")
 
         # Load conversation history
         history_rows = (
@@ -48,14 +48,76 @@ def handler(event, context):
         )
         history = [{"role": m.role, "content": m.content} for m in history_rows]
 
-        # Call LLM (can take minutes)
-        result = chat(
-            messages=[{"role": "user", "content": message}],
-            conversation_history=history,
-            user_id=user_id,
-        )
+        # Step 2: Generating
+        _update_status(session, task_id, "processing", "Generating email content...")
 
-        # Save assistant message to conversation
+        # Call LLM (this internally updates steps via suggest_templates)
+        # We pass a status callback so smart_suggest can update progress
+        import services.smart_suggest as smart_suggest
+        _original_generate = smart_suggest.generate_suggestions
+
+        def _wrapped_generate(uid, content):
+            _update_status(session, task_id, "processing", "Finding perfect images...")
+            # Fetch images
+            image_queries = content.get("image_queries", [])
+            images = smart_suggest.fetch_unsplash_images(image_queries) if image_queries else {}
+
+            _update_status(session, task_id, "processing", "Matching template layouts...")
+            # Search Pinecone
+            brand = smart_suggest.get_brand_context(uid)
+            purpose = content.get("purpose", "email")
+            tone = content.get("tone") or (brand or {}).get("tone", "")
+            query_text = smart_suggest.build_query(purpose, brand, tone)
+            matches = smart_suggest.search_templates(query_text, top_k=5)
+
+            _update_status(session, task_id, "processing", "Customizing templates for you...")
+            # Fetch + customize
+            s2 = get_session()
+            try:
+                slugs = [m["slug"] for m in matches]
+                from models.template_library import TemplateLibraryItem
+                templates = s2.query(TemplateLibraryItem).filter(
+                    TemplateLibraryItem.slug.in_(slugs),
+                    TemplateLibraryItem.is_active == True,
+                ).all()
+                template_map = {t.slug: t for t in templates}
+            finally:
+                s2.close()
+
+            suggestions = []
+            for match in matches:
+                t = template_map.get(match["slug"])
+                if not t:
+                    continue
+                customized = smart_suggest.customize_template(t.components, content, images, brand)
+                suggestions.append({
+                    "slug": match["slug"],
+                    "name": t.name,
+                    "description": t.description,
+                    "industry": t.industry,
+                    "purpose": t.purpose,
+                    "tone": t.tone,
+                    "score": match["score"],
+                    "components": customized,
+                })
+
+            return suggestions, query_text
+
+        # Monkey-patch for this request
+        smart_suggest.generate_suggestions = _wrapped_generate
+
+        try:
+            result = chat(
+                messages=[{"role": "user", "content": message}],
+                conversation_history=history,
+                user_id=user_id,
+            )
+        finally:
+            smart_suggest.generate_suggestions = _original_generate
+
+        _update_status(session, task_id, "processing", "Preparing your results...")
+
+        # Save assistant message
         asst_msg = Message(
             conversation_id=conversation_id,
             role="assistant",
@@ -64,10 +126,13 @@ def handler(event, context):
         )
         session.add(asst_msg)
 
-        # Update task with result
-        task.status = "completed"
-        task.result_content = result["content"]
-        task.result_widgets = result.get("widgets", [])
+        # Complete task
+        task = session.query(ChatTask).filter_by(id=task_id).first()
+        if task:
+            task.status = "completed"
+            task.status_message = "Done!"
+            task.result_content = result["content"]
+            task.result_widgets = result.get("widgets", [])
         session.commit()
 
         logger.info(f"Task {task_id} completed")
@@ -79,6 +144,7 @@ def handler(event, context):
             if task:
                 task.status = "failed"
                 task.error_message = str(e)
+                task.status_message = "Something went wrong"
                 session.commit()
         except Exception:
             pass
