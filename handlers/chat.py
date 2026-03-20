@@ -1,15 +1,26 @@
 """Chat Lambda — /api/chat/* routes.
 
-POST /api/chat            — Send message, get AI response with optional widgets
+POST /api/chat                — Submit message, returns task_id immediately
+GET  /api/chat/status/{id}    — Poll for result
 """
 
 import json
+import boto3
 from utils.response import success, error, options_response
 from utils.auth import verify_token
 from config.database import get_session
 from models.conversation import Conversation
 from models.message import Message
-from services.llm_service import chat
+from models.chat_task import ChatTask
+
+_lambda_client = None
+
+
+def _get_lambda_client():
+    global _lambda_client
+    if _lambda_client is None:
+        _lambda_client = boto3.client("lambda")
+    return _lambda_client
 
 
 def handler(event, context):
@@ -27,14 +38,20 @@ def handler(event, context):
     user_id = payload["sub"]
 
     if path == "/api/chat" and method == "POST":
-        return _chat(body, user_id)
+        return _submit_chat(body, user_id)
+
+    # GET /api/chat/status/{task_id}
+    parts = path.rstrip("/").split("/")
+    if len(parts) == 5 and parts[3] == "status" and method == "GET":
+        return _poll_status(parts[4], user_id)
 
     return error(404, "NOT_FOUND", "Route not found")
 
 
-def _chat(body: dict, user_id: str):
-    conversation_id = body.get("conversation_id")
+def _submit_chat(body: dict, user_id: str):
+    """Submit a chat message. Creates task, invokes worker async, returns immediately."""
     message = body.get("message", "").strip()
+    conversation_id = body.get("conversation_id")
 
     if not message:
         return error(400, "VALIDATION_ERROR", "Message is required")
@@ -52,40 +69,68 @@ def _chat(body: dict, user_id: str):
             session.commit()
             session.refresh(conv)
 
-        # Load conversation history
-        history_rows = (
-            session.query(Message)
-            .filter_by(conversation_id=conv.id)
-            .order_by(Message.created_at)
-            .all()
-        )
-        history = [{"role": m.role, "content": m.content} for m in history_rows]
-
         # Save user message
         user_msg = Message(conversation_id=conv.id, role="user", content=message)
         session.add(user_msg)
-        session.commit()
 
-        # Call LLM
-        result = chat(
-            messages=[{"role": "user", "content": message}],
-            conversation_history=history,
-        )
-
-        # Save assistant message
-        asst_msg = Message(
+        # Create task
+        task = ChatTask(
+            user_id=user_id,
             conversation_id=conv.id,
-            role="assistant",
-            content=result["content"],
-            widgets=result.get("widgets", []),
+            status="pending",
+            message=message,
         )
-        session.add(asst_msg)
+        session.add(task)
         session.commit()
+        session.refresh(task)
 
-        return success(200, {
+        # Invoke worker Lambda asynchronously
+        try:
+            _get_lambda_client().invoke(
+                FunctionName="email-builder-chat-worker",
+                InvocationType="Event",  # async — returns immediately
+                Payload=json.dumps({
+                    "task_id": task.id,
+                    "user_id": user_id,
+                    "conversation_id": conv.id,
+                    "message": message,
+                }),
+            )
+        except Exception as e:
+            # If async invoke fails, mark task as failed
+            task.status = "failed"
+            task.error_message = f"Failed to start worker: {str(e)}"
+            session.commit()
+
+        return success(202, {
+            "task_id": task.id,
             "conversation_id": conv.id,
-            "message": result["content"],
-            "widgets": result.get("widgets", []),
+            "status": "pending",
         })
+    finally:
+        session.close()
+
+
+def _poll_status(task_id: str, user_id: str):
+    """Poll for task result."""
+    session = get_session()
+    try:
+        task = session.query(ChatTask).filter_by(id=task_id, user_id=user_id).first()
+        if not task:
+            return error(404, "NOT_FOUND", "Task not found")
+
+        result = {
+            "task_id": task.id,
+            "status": task.status,
+            "conversation_id": task.conversation_id,
+        }
+
+        if task.status == "completed":
+            result["message"] = task.result_content
+            result["widgets"] = task.result_widgets or []
+        elif task.status == "failed":
+            result["error"] = task.error_message
+
+        return success(200, result)
     finally:
         session.close()
