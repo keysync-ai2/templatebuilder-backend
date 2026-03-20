@@ -9,6 +9,8 @@ Reference: sample_mcp_tool.py (manage-logs MCP pattern)
 import json
 from mcp.server import EmailEngineMCPServer
 from mcp.tools import TOOLS
+from services.template_saver import create_template_saver
+from engine.presets import local_preset_loader
 
 _mcp_server = None
 
@@ -32,7 +34,10 @@ _HEADERS = {
 def _get_mcp_server():
     global _mcp_server
     if _mcp_server is None:
-        _mcp_server = EmailEngineMCPServer()
+        _mcp_server = EmailEngineMCPServer(
+            template_saver=create_template_saver(user_id="mcp-anonymous"),
+            preset_loader=local_preset_loader,
+        )
     return _mcp_server
 
 

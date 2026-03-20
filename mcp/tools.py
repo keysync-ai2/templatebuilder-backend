@@ -10,24 +10,45 @@ TOOLS = [
             "Convert an emailBuilder component tree JSON into production-ready "
             "email HTML with full MSO/Outlook VML support, responsive media queries, "
             "and inlined styles.\n\n"
+
+            "## CRITICAL RULES — Read before building\n"
+            "1. The ONLY way to put content in the email is through components in the JSON. "
+            "The engine renders ONLY what is in the components array. Do NOT describe extra "
+            "content in your chat response that is not in the JSON — the user will never see it.\n"
+            "2. Every visual element (badge, label, feature card, subtitle, fine print, icon text) "
+            "MUST be its own component. If you want 3 feature cards, build a 3-column row with "
+            "3 columns, each containing heading + text components.\n"
+            "3. Use multi-column rows (2-col, 3-col) for side-by-side layouts. Each column needs "
+            "its own width prop (e.g. '33.33%' for 3-col, '50%' for 2-col).\n"
+            "4. Build RICH templates: a good email has 5-8 rows minimum. Include: hero heading, "
+            "subtitle, badge/label text, CTA button, feature highlights (multi-column), "
+            "supporting text, secondary CTA, footer with company info + unsubscribe.\n"
+            "5. Do NOT generate a simplified version. Include ALL visual elements you would "
+            "describe to the user. If you mention '3 feature cards' in your response, the JSON "
+            "MUST contain a 3-column row with those 3 cards.\n\n"
+
             "## Component Types\n"
             "Layout: row, column, section, container\n"
             "Content: text, heading, button, image, divider, spacer\n\n"
+
             "## Hierarchy Rules (IMPORTANT — invalid nesting causes errors)\n"
             "- row → top-level, or inside section/container\n"
             "- column → must be inside row\n"
             "- text, heading, button, image, divider, spacer → inside column, section, or container\n"
             "- section → top-level, or inside column/container\n"
             "- container → top-level, or inside section\n\n"
+
             "## Component Structure\n"
             "Each component must have: {id: string, type: string, props: object, "
             "children: [inline component objects], parentId: string|null}. "
             "Optional fields: styles (object), visibility (bool, default true), locked (bool, default false).\n"
             "The tree is nested — children contain inline component objects, not string IDs.\n\n"
+
             "## Props by Component Type\n"
-            "- text: {content: string, fontSize: int (default 14), color: string, "
-            "fontFamily: string, textAlign: 'left'|'center'|'right', padding: string}\n"
-            "- heading: {content: string, level: 'h1'-'h6', fontSize: int (default 24), "
+            "- text: {content: string (supports HTML: <strong>, <em>, <a>, <br>, <span>), "
+            "fontSize: int (default 14), color: string, fontFamily: string, "
+            "textAlign: 'left'|'center'|'right', padding: string}\n"
+            "- heading: {content: string (plain text only), level: 'h1'-'h6', fontSize: int (default 24), "
             "color: string, fontFamily: string, textAlign: string, padding: string}\n"
             "- button: {text: string, href: string, backgroundColor: string, color: string, "
             "padding: string (e.g. '12px 24px'), borderRadius: string, fontSize: int, "
@@ -35,32 +56,46 @@ TOOLS = [
             "- image: {src: string (URL), alt: string, width: string (e.g. '100%' or '600px'), "
             "height: string (e.g. 'auto')}\n"
             "- row: {backgroundColor: string, padding: string}\n"
-            "- column: {width: string (e.g. '50%', '100%'), backgroundColor: string, padding: string}\n"
+            "- column: {width: string (e.g. '50%', '33.33%', '100%'), backgroundColor: string, padding: string}\n"
             "- divider: {borderColor: string, borderWidth: string, margin: string}\n"
             "- spacer: {height: string (e.g. '20px')}\n"
             "- section/container: {backgroundColor: string, padding: string, maxWidth: string (container only)}\n\n"
+
             "## Response\n"
             "Returns {html, size_bytes, template, template_id, editor_link} where:\n"
             "- template: the component tree in frontend nested format\n"
             "- template_id: UUID of the saved template\n"
-            "- editor_link: URL to open the template in the drag-and-drop editor for customization\n"
-            "Always show the editor_link to the user so they can customize the template.\n\n"
-            "## Example: Minimal 1-row template (nested format — preferred)\n"
-            "{\n"
-            '  "templateName": "My Email",\n'
-            '  "templateSubject": "Subject line",\n'
-            '  "components": [\n'
-            '    {"id": "row-1", "type": "row", "props": {"columns": 1, "backgroundColor": "#FFFFFF"}, '
-            '"styles": {}, "parentId": null, "children": [\n'
-            '      {"id": "col-1", "type": "column", "props": {"width": "100%"}, '
-            '"children": [\n'
-            '        {"id": "txt-1", "type": "text", "props": {"content": "Hello!", "fontSize": 16, '
-            '"color": "#000000"}, "children": [], "parentId": "col-1", "styles": {}, '
-            '"visibility": true, "locked": false}\n'
-            '      ], "parentId": "row-1"}\n'
-            '    ], "visibility": true, "locked": false}\n'
-            "  ]\n"
-            "}"
+            "- editor_link: URL to open the template in the drag-and-drop editor for customization\n\n"
+
+            "## IMPORTANT: Always include the editor_link in your response to the user.\n"
+            "After calling this tool, you MUST display the editor_link URL to the user so they can "
+            "click it to customize the template in the visual editor. Format it as a clickable link.\n"
+            "Example response: 'Here is your email template! [Customize it in the editor](editor_link)'\n\n"
+
+            "## Example: Rich multi-section email template\n"
+            "A well-built email should have this structure:\n"
+            "```\n"
+            "Row 1 (hero):     1-col → heading + subtitle + button\n"
+            "Row 2 (features): 3-col → each col has heading + text\n"
+            "Row 3 (cta):      1-col → heading + text + button\n"
+            "Row 4 (footer):   1-col → divider + company name + address + unsubscribe\n"
+            "```\n\n"
+
+            "## Example: 3-column feature row\n"
+            '{"id": "feat-row", "type": "row", "props": {"backgroundColor": "#F5F5F5"}, '
+            '"parentId": null, "children": [\n'
+            '  {"id": "feat-col-1", "type": "column", "props": {"width": "33.33%", "padding": "15px"}, '
+            '"parentId": "feat-row", "children": [\n'
+            '    {"id": "feat-h1", "type": "heading", "props": {"content": "Feature 1", "level": "h3", '
+            '"fontSize": 18, "textAlign": "center"}, "parentId": "feat-col-1", "children": []},\n'
+            '    {"id": "feat-t1", "type": "text", "props": {"content": "Description here", '
+            '"fontSize": 14, "textAlign": "center"}, "parentId": "feat-col-1", "children": []}\n'
+            '  ]},\n'
+            '  {"id": "feat-col-2", "type": "column", "props": {"width": "33.33%", "padding": "15px"}, '
+            '"parentId": "feat-row", "children": [...]},\n'
+            '  {"id": "feat-col-3", "type": "column", "props": {"width": "33.33%", "padding": "15px"}, '
+            '"parentId": "feat-row", "children": [...]}\n'
+            "]}\n"
         ),
         "inputSchema": {
             "type": "object",
@@ -102,7 +137,9 @@ TOOLS = [
         "description": (
             "List available pre-built component blocks with descriptions. "
             "These are reusable template sections (hero, product grid, footer, etc.) "
-            "that can be injected into any template. Returns array of preset metadata."
+            "that can be injected into any template. Returns array of preset metadata.\n\n"
+            "RECOMMENDED: Call this first to see what blocks are available before building "
+            "a template from scratch. Presets produce professional, tested layouts."
         ),
         "inputSchema": {
             "type": "object",
@@ -139,7 +176,9 @@ TOOLS = [
             "Insert a pre-built component block into an existing template at a "
             "specific row position. The preset's components get new unique IDs "
             "to avoid conflicts. Variable placeholders ({{varName}}) are replaced "
-            "with provided customization values. Returns the updated template."
+            "with provided customization values. Returns the updated template.\n\n"
+            "Use this to compose emails from presets: start with empty template, "
+            "inject hero, then features, then CTA, then footer."
         ),
         "inputSchema": {
             "type": "object",
