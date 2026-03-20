@@ -67,61 +67,26 @@ You should call suggest_templates with:
   "image_queries": ["yoga class studio", "meditation peaceful", "wellness healthy lifestyle"]
 }"""
 
-# Suggest tool definition (separate from MCP tools)
+# Suggest tool definition
 SUGGEST_TOOL = {
     "type": "function",
     "function": {
         "name": "suggest_templates",
         "description": (
-            "Generate 5 customized email template suggestions. Extracts content from the user's request, "
-            "finds matching template layouts via semantic search, fetches relevant Unsplash images, "
-            "applies brand colors, and injects the content into each template. "
-            "Returns 5 fully customized templates for the user to choose from."
+            "Generate 5 customized email template suggestions based on the user's request. "
+            "The system will find matching layouts, analyze template structure, write content "
+            "for each slot using the user's brand profile, fetch matching images, and apply "
+            "brand colors. Just pass the user's request — the system handles everything."
         ),
         "parameters": {
             "type": "object",
             "properties": {
-                "purpose": {
+                "user_request": {
                     "type": "string",
-                    "description": "What kind of email: welcome, sale, newsletter, launch, event, re-engagement, thank-you, etc.",
-                },
-                "headline": {
-                    "type": "string",
-                    "description": "Main heading text for the email hero section.",
-                },
-                "subtitle": {
-                    "type": "string",
-                    "description": "Supporting text below the headline.",
-                },
-                "cta_text": {
-                    "type": "string",
-                    "description": "Call-to-action button text.",
-                },
-                "features": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "List of 3-4 feature or benefit names for feature sections.",
-                },
-                "body_text": {
-                    "type": "string",
-                    "description": "Additional body copy or description text.",
-                },
-                "company": {
-                    "type": "string",
-                    "description": "Company or brand name.",
-                },
-                "tone": {
-                    "type": "string",
-                    "enum": ["professional", "casual", "friendly", "urgent", "playful", "minimal"],
-                    "description": "Email tone/style.",
-                },
-                "image_queries": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "2-3 Unsplash search queries for relevant images.",
+                    "description": "The user's request for an email template, exactly as they wrote it.",
                 },
             },
-            "required": ["purpose", "headline", "subtitle", "cta_text"],
+            "required": ["user_request"],
         },
     },
 }
@@ -214,12 +179,13 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None, u
                 if fn_name == "suggest_templates":
                     try:
                         from services.smart_suggest import generate_suggestions
+                        request_text = fn_args.get("user_request", "")
                         suggestions, query_used = generate_suggestions(
                             user_id or "anonymous",
-                            fn_args,
+                            request_text,
                         )
 
-                        # Return suggestions as tool result
+                        # Return summary to LLM
                         result_summary = {
                             "suggestions_count": len(suggestions),
                             "query_used": query_used,
