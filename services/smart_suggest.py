@@ -1,10 +1,10 @@
-"""Smart Suggestion v2 — Slot-based LLM content filling.
+"""Smart Suggestion v2.1 — Slot-based LLM content filling with brand awareness.
 
 Flow:
 1. Pinecone finds top 5 matching template layouts
 2. Extract named slots from each template's component tree
-3. ONE LLM call fills all slots for all 5 templates with brand-aware content
-4. Python injects content + Unsplash images + brand colors
+3. ONE LLM call fills all slots with brand-aware content
+4. Python injects content + brand header (logo+tagline) + images + colors
 5. Returns 5 fully customized suggestions
 """
 
@@ -39,7 +39,11 @@ def _get_llm():
     return _llm_client
 
 
-# ─── Step 1: Fetch brand profile ───
+def _id():
+    return f"sug-{uuid.uuid4().hex[:8]}"
+
+
+# ─── Brand context ───
 
 def get_brand_context(user_id):
     session = get_session()
@@ -50,269 +54,203 @@ def get_brand_context(user_id):
         session.close()
 
 
-# ─── Step 2: Extract slots from template ───
+# ─── Slot extraction ───
 
 def extract_slots(components):
-    """Extract named content slots from a template's component tree.
-
-    Returns dict of {slot_name: {type, current_value, path, description}}
-    """
+    """Extract named content slots from a template's component tree."""
     slots = {}
-    image_count = [0]
-    heading_count = {"h1": 0, "h2": 0, "h3": 0}
-    text_count = [0]
-    button_count = [0]
+    counters = {"heading": 0, "text": 0, "button": 0, "image": 0}
 
-    # Detect section type by row position and content
-    def _guess_section(row_idx, total_rows, comp):
+    def _section_name(row_idx, total):
         if row_idx == 0:
             return "hero"
-        if row_idx == total_rows - 1:
+        if row_idx == total - 1:
             return "footer"
-        # Check children for clues
-        children = comp.get("children", [])
-        if len(children) >= 3:
-            return "stats" if any(_has_type(c, "heading") for c in children) else "features"
-        return "content"
-
-    def _has_type(comp, ctype):
-        if comp.get("type") == ctype:
-            return True
-        for child in comp.get("children", []):
-            if isinstance(child, dict) and _has_type(child, ctype):
-                return True
-        return False
+        if row_idx == total - 2:
+            return "cta"
+        return f"section_{row_idx}"
 
     def _walk(comp, section, path):
         ctype = comp.get("type", "")
         props = comp.get("props", {})
 
-        if ctype == "heading":
-            level = props.get("level", "h2")
-            heading_count[level] = heading_count.get(level, 0) + 1
-            idx = heading_count[level]
+        if ctype in ("heading", "text", "button", "image"):
+            counters[ctype] += 1
+            idx = counters[ctype]
 
-            if level == "h1":
-                name = f"{section}_heading"
-            elif section == "hero":
-                name = f"{section}_subtitle_heading" if idx > 1 else f"{section}_heading"
-            elif section == "stats":
-                name = f"stat_{idx}_value"
-            elif section == "footer":
-                name = f"footer_heading"
-            else:
-                name = f"{section}_heading_{idx}"
-
-            slots[name] = {
-                "type": "heading",
-                "level": level,
-                "current_value": props.get("content", ""),
-                "path": list(path),
-            }
-
-        elif ctype == "text":
-            text_count[0] += 1
-            content = props.get("content", "")
-
-            if section == "stats":
-                # Stats labels alternate with values
-                stat_h = [k for k in slots if k.startswith("stat_") and k.endswith("_value")]
-                idx = len(stat_h)
-                name = f"stat_{idx}_label"
-            elif section == "footer":
-                if "<strong>" in content:
-                    name = "footer_company"
-                elif "unsubscribe" in content.lower() or "<a" in content.lower():
-                    name = "footer_unsubscribe"
-                else:
-                    name = f"footer_text_{text_count[0]}"
-            elif section == "hero":
-                name = "hero_subtitle"
-            elif "✓" in content or "&#10003;" in content or "check" in section:
-                check_idx = len([k for k in slots if k.startswith("check_")]) + 1
-                name = f"check_{check_idx}"
-            else:
-                name = f"{section}_text_{text_count[0]}"
-
-            # Skip duplicates
-            if name in slots:
-                name = f"{name}_{text_count[0]}"
+            # Name based on type + section + index
+            if ctype == "heading":
+                level = props.get("level", "h2")
+                name = f"{section}_{ctype}_{idx}"
+                current = props.get("content", "")
+            elif ctype == "text":
+                name = f"{section}_{ctype}_{idx}"
+                current = props.get("content", "")
+                # Clean HTML for display
+                current = current.replace("&#10003;", "✓").replace("<strong>", "").replace("</strong>", "")
+                current = current[:80]
+            elif ctype == "button":
+                name = f"{section}_{ctype}_{idx}"
+                current = props.get("text", "")
+            elif ctype == "image":
+                name = f"{section}_{ctype}_{idx}"
+                current = props.get("alt", "")
 
             slots[name] = {
-                "type": "text",
-                "current_value": content[:100],
+                "type": ctype,
+                "current_value": current[:80] if current else "",
                 "path": list(path),
+                "props_key": "content" if ctype in ("heading", "text") else ("text" if ctype == "button" else "src"),
             }
 
-        elif ctype == "button":
-            button_count[0] += 1
-            if section == "hero":
-                name = "hero_button"
-            elif button_count[0] <= 2 and section != "footer":
-                name = f"cta_button_{button_count[0]}" if button_count[0] > 1 else "cta_button"
-            else:
-                name = f"{section}_button_{button_count[0]}"
-
-            if name in slots:
-                name = f"{name}_{button_count[0]}"
-
-            slots[name] = {
-                "type": "button",
-                "current_value": props.get("text", ""),
-                "path": list(path),
-            }
-
-        elif ctype == "image":
-            image_count[0] += 1
-            name = f"image_{image_count[0]}"
-            slots[name] = {
-                "type": "image",
-                "current_value": props.get("alt", ""),
-                "path": list(path),
-            }
-
-        # Recurse
         for i, child in enumerate(comp.get("children", [])):
             if isinstance(child, dict):
-                child_section = section
-                # Detect section changes at row level
-                if ctype == "row" and comp.get("parentId") is None:
-                    pass  # section already set
-                _walk(child, child_section, path + [i])
+                _walk(child, section, path + [i])
 
-    total_rows = len(components)
-    for row_idx, row_comp in enumerate(components):
-        section = _guess_section(row_idx, total_rows, row_comp)
-        _walk(row_comp, section, [row_idx])
+    total = len(components)
+    for row_idx, row in enumerate(components):
+        section = _section_name(row_idx, total)
+        _walk(row, section, [row_idx])
 
     return slots
 
 
-# ─── Step 3: LLM fills all slots ───
+# ─── LLM content generation ───
 
 def generate_slot_content(user_request, brand, template_slots_map):
-    """Call LLM once to fill all slots for all templates.
+    """ONE LLM call fills all slots for all 5 templates."""
 
-    Args:
-        user_request: raw user message
-        brand: brand profile dict or None
-        template_slots_map: {slug: {slot_name: {type, current_value}}}
-
-    Returns: {slug: {slot_name: value}, "image_queries": [...]}
-    """
-    # Build brand context
-    brand_text = "No brand profile set."
+    # Brand context
+    brand_section = ""
     if brand:
-        features = ", ".join(brand.get("features", [])) or "not specified"
-        brand_text = f"""Brand Profile:
-- Company: {brand.get('business_name', 'Unknown')}
+        features_list = brand.get("features", [])
+        features_str = ", ".join(f[:50] for f in features_list[:5]) if features_list else "not specified"
+        brand_section = f"""
+## Brand Profile (MUST use this information)
+- Company Name: {brand.get('business_name', '')}
 - Tagline: {brand.get('tagline', '')}
 - Industry: {brand.get('industry', 'other')}
-- Tone: {brand.get('tone', 'professional')}
-- Primary Color: {brand.get('primary_color', '#2563EB')}
-- Secondary Color: {brand.get('secondary_color', '#1E40AF')}
-- Key Features: {features}
-- Website: {brand.get('website_url', '')}"""
+- Tone of Voice: {brand.get('tone', 'professional')}
+- Website: {brand.get('website_url', '')}
+- Key Features/Services: {features_str}
 
-    # Build template slot descriptions
-    templates_text = ""
+IMPORTANT: Use the company name "{brand.get('business_name', '')}" in the hero heading and footer.
+Use the tagline "{brand.get('tagline', '')}" as hero subtitle or incorporate it naturally.
+Write all content in a {brand.get('tone', 'professional')} tone.
+Reference the company's features/services in checklist items and body text.
+"""
+    else:
+        brand_section = "\nNo brand profile available. Use details from the user's request.\n"
+
+    # Template slots
+    templates_section = ""
     for slug, slots in template_slots_map.items():
-        templates_text += f'\nTemplate: "{slug}"\nSlots to fill:\n'
-        for slot_name, slot_info in slots.items():
-            if slot_info["type"] == "image":
-                continue  # Images handled separately
-            stype = slot_info["type"]
-            current = slot_info.get("current_value", "")[:60]
-            templates_text += f'  - {slot_name} ({stype}): currently "{current}"\n'
+        templates_section += f'\n### Template: "{slug}"\n'
+        for slot_name, info in slots.items():
+            if info["type"] == "image":
+                templates_section += f'  {slot_name}: [IMAGE — suggest alt text]\n'
+            else:
+                current = info.get("current_value", "")
+                templates_section += f'  {slot_name} ({info["type"]}): "{current}"\n'
 
-    prompt = f"""You are an expert email content writer. A user wants to create an email.
-Fill every slot below with compelling, on-brand content tailored to their request.
+    prompt = f"""You are an expert email copywriter. Write compelling content for email templates.
 
-{brand_text}
+## User Request
+"{user_request}"
+{brand_section}
+## Templates to Fill
 
-User Request: "{user_request}"
+For each template, fill EVERY slot with specific, relevant content.
+{templates_section}
 
-{templates_text}
+## Writing Rules
+1. Hero heading: Include the company name. Make it exciting and specific to the email purpose.
+2. Hero subtitle: Use the tagline or write a compelling one-liner that supports the heading.
+3. Stat values: Use realistic, impressive numbers relevant to the business.
+4. Stat labels: Short (2-3 words) describing what the number represents.
+5. Checklist items: Specific benefits/features of the company, not generic text. Full sentences.
+6. CTA buttons: Action verbs, max 4 words (e.g., "Start Free Trial", "Book Your Class").
+7. Body text: 1-2 sentences, specific to the business, not filler.
+8. Footer company: ALWAYS use the brand company name.
+9. Footer address: Use a realistic address.
+10. Image slots: Write descriptive alt text for the image.
+11. Every piece of content must feel custom-written for THIS specific business.
 
-IMPORTANT:
-- Write content that matches the user's specific request and brand
-- Use the brand's company name in footers
-- Match the brand's tone (professional/casual/friendly/urgent/playful/minimal)
-- For stat values, use realistic impressive numbers
-- For buttons, use action-oriented text (max 4 words)
-- For headings, be concise and impactful
-- Also suggest 3 Unsplash image search queries that would match this email's visual style
-
-Respond ONLY with valid JSON in this exact format:
+## Response Format
+Respond with ONLY valid JSON (no markdown, no code fences):
 {{
   "templates": {{
-    "{list(template_slots_map.keys())[0]}": {{
-      "slot_name": "content value",
-      ...
+    "<slug>": {{
+      "<slot_name>": "content value",
+      ...for every slot listed above
     }},
-    ...
+    ...for each template
   }},
-  "image_queries": ["query1", "query2", "query3"]
+  "image_queries": ["specific query 1", "specific query 2", "specific query 3"]
 }}"""
 
     client = _get_llm()
     response = client.chat.completions.create(
         model="deepseek-chat",
-        max_tokens=4096,
+        max_tokens=6000,
+        temperature=0.7,
         messages=[
-            {"role": "system", "content": "You are an email content writer. Respond only with valid JSON. No markdown, no code blocks, just raw JSON."},
+            {"role": "system", "content": "You are an expert email copywriter. Output ONLY valid JSON. No markdown fences, no explanation, just the JSON object."},
             {"role": "user", "content": prompt},
         ],
     )
 
-    content = response.choices[0].message.content or "{}"
+    content = (response.choices[0].message.content or "{}").strip()
 
-    # Clean up — remove markdown code fences if present
-    content = content.strip()
+    # Clean markdown fences
     if content.startswith("```"):
-        content = content.split("\n", 1)[1] if "\n" in content else content[3:]
+        lines = content.split("\n")
+        content = "\n".join(lines[1:] if lines[0].startswith("```") else lines)
     if content.endswith("```"):
-        content = content[:-3]
-    content = content.strip()
+        content = content[:-3].strip()
 
     try:
         return json.loads(content)
     except json.JSONDecodeError as e:
-        logger.error(f"LLM returned invalid JSON: {e}\nContent: {content[:500]}")
+        logger.error(f"LLM JSON parse failed: {e}\nContent: {content[:500]}")
         return {"templates": {}, "image_queries": []}
 
 
-# ─── Step 4: Fetch images ───
+# ─── Unsplash images ───
 
-def fetch_unsplash_images(queries, per_query=1):
+def fetch_unsplash_images(queries, per_query=2):
     if not UNSPLASH_KEY:
         return {}
     images = {}
-    for q in queries[:3]:  # Max 3 queries
+    for q in queries[:3]:
         try:
             url = f"{UNSPLASH_API}/search/photos?{urlencode({'query': q, 'per_page': str(per_query)})}"
             req = Request(url, headers={"Authorization": f"Client-ID {UNSPLASH_KEY}"})
             with urlopen(req, timeout=5) as resp:
                 data = json.loads(resp.read())
             results = data.get("results", [])
-            if results:
-                images[q] = results[0].get("urls", {}).get("regular", "")
+            for i, r in enumerate(results):
+                img_url = r.get("urls", {}).get("regular", "")
+                if img_url:
+                    images[f"{q}_{i}"] = img_url
         except Exception as e:
             logger.warning(f"Unsplash failed for '{q}': {e}")
     return images
 
 
-# ─── Step 5: Fill slots into template ───
+# ─── Fill slots into template ───
 
-def fill_slots(components, slot_values, slots_meta, images, brand):
-    """Fill extracted slots with LLM content + images + brand colors."""
+def fill_slots(components, slot_values, slots_meta, images, brand, company_override=None):
+    """Fill slots with LLM content + images + brand colors + logo/tagline."""
     components = copy.deepcopy(components)
     image_urls = list(images.values())
     image_idx = [0]
 
     primary = (brand or {}).get("primary_color", "#2563EB")
     secondary = (brand or {}).get("secondary_color", "#1E40AF")
-    company = (brand or {}).get("business_name", "")
+    company = company_override or (brand or {}).get("business_name", "")
+    logo_url = (brand or {}).get("logo_url", "")
+    tagline = (brand or {}).get("tagline", "")
 
     # Build path → slot_name lookup
     path_to_slot = {}
@@ -325,60 +263,56 @@ def fill_slots(components, slot_values, slots_meta, images, brand):
         props = comp.get("props", {})
         path_key = tuple(path)
 
+        # Fill slot content
         slot_name = path_to_slot.get(path_key)
         if slot_name and slot_name in slot_values:
             value = slot_values[slot_name]
-
             if ctype == "heading":
                 props["content"] = value
             elif ctype == "text":
-                # Preserve HTML structure for footer/checklist
                 current = props.get("content", "")
                 if "&#10003;" in current or "✓" in current:
-                    check_color = primary
-                    props["content"] = f'<span style="color:{check_color};font-weight:bold;">&#10003;</span>&nbsp;&nbsp;{value}'
-                elif "<strong>" in current and company:
-                    props["content"] = f"<strong>{company}</strong>"
-                elif "<a" in current and "unsubscribe" in current.lower():
-                    pass  # Keep unsubscribe link
+                    props["content"] = f'<span style="color:{primary};font-weight:bold;font-size:16px;">&#10003;</span>&nbsp;&nbsp;{value}'
+                elif "<a" in current and "nsubscribe" in current.lower():
+                    pass  # Keep unsubscribe
                 else:
                     props["content"] = value
             elif ctype == "button":
                 props["text"] = value
+            elif ctype == "image":
+                # Use Unsplash image if available
+                if image_urls and image_idx[0] < len(image_urls):
+                    props["src"] = image_urls[image_idx[0]]
+                    props["alt"] = value if isinstance(value, str) else props.get("alt", "")
+                    image_idx[0] += 1
 
-        # Apply brand colors
+        # Apply brand colors — dark backgrounds become primary
         if ctype == "row":
             bg = props.get("backgroundColor", "")
-            if bg and bg not in ("#FFFFFF", "#F8F9FA", "#F0FDF4", "#ECFDF5", "#EFF6FF",
-                                  "#FFF1F2", "#FEF2F2", "#FFFBEB", "#FEF9C3", "#E0F2FE",
-                                  "#CFFAFE", "#EDE9FE", "#D1FAE5", "#FFE4E6", "#FDF2F8",
-                                  "#FDF4FF", "#FEF3C7", "#F5F3FF", "#F3F4F6", "#F0FDF4",
-                                  "#F0FDFA", "#FAFAF9", "#DCFCE7", "#FFF7ED",
-                                  "transparent", "", "#FFFFFF"):
+            if _is_dark_color(bg):
                 props["backgroundColor"] = primary
 
         if ctype == "column":
             bg = props.get("backgroundColor", "")
-            if bg and bg not in ("#FFFFFF", "transparent", "", "#FFFFFF") and bg == props.get("backgroundColor"):
-                # Only override if it was a dark color (hero/footer)
-                if bg.startswith("#0") or bg.startswith("#1") or bg.startswith("#2") or bg.startswith("#3") or bg.startswith("#4") or bg.startswith("#5"):
-                    props["backgroundColor"] = primary
+            if _is_dark_color(bg):
+                props["backgroundColor"] = primary
 
         if ctype == "button":
             bg = props.get("backgroundColor", "")
-            if bg and bg not in ("#FFFFFF", "#ffffff", "#6B7280", "#9CA3AF"):
+            if bg and bg not in ("#FFFFFF", "#ffffff", "#6B7280", "#9CA3AF", "transparent"):
                 props["backgroundColor"] = primary
 
         if ctype == "heading":
             color = props.get("color", "")
-            # Only change accent-colored headings, keep white/dark as-is
-            if color and color not in ("#FFFFFF", "#ffffff", "#1a1a1a", "#333333", "#000000", "#1C1917", "#18181B"):
+            if color and color not in ("#FFFFFF", "#ffffff", "#1a1a1a", "#333333",
+                                       "#000000", "#1C1917", "#18181B", "#292524"):
                 props["color"] = primary
 
-        if ctype == "image":
-            if image_urls and image_idx[0] < len(image_urls):
-                props["src"] = image_urls[image_idx[0]]
-                image_idx[0] += 1
+        # Footer company name — always override
+        if ctype == "text" and company:
+            content = props.get("content", "")
+            if "<strong>" in content:
+                props["content"] = f"<strong>{company}</strong>"
 
         # Recurse
         for i, child in enumerate(comp.get("children", [])):
@@ -388,10 +322,29 @@ def fill_slots(components, slot_values, slots_meta, images, brand):
     for i, comp in enumerate(components):
         _walk(comp, [i])
 
-    # Remap IDs
+    # Add brand header row if logo exists
+    if logo_url:
+        logo_row = {
+            "id": _id(), "type": "row",
+            "props": {"backgroundColor": "#FFFFFF", "padding": "0"},
+            "styles": {}, "parentId": None, "visibility": True, "locked": False,
+            "children": [{
+                "id": _id(), "type": "column",
+                "props": {"width": "100%", "padding": "15px 20px", "backgroundColor": "#FFFFFF"},
+                "styles": {}, "parentId": None, "visibility": True, "locked": False,
+                "children": [{
+                    "id": _id(), "type": "image",
+                    "props": {"src": logo_url, "alt": f"{company} logo", "width": "150px", "height": "auto"},
+                    "styles": {}, "parentId": None, "children": [], "visibility": True, "locked": False,
+                }],
+            }],
+        }
+        components.insert(0, logo_row)
+
+    # Remap all IDs
     def _remap(items):
         for comp in items:
-            comp["id"] = f"sug-{uuid.uuid4().hex[:8]}"
+            comp["id"] = _id()
             for child in comp.get("children", []):
                 if isinstance(child, dict):
                     _remap([child])
@@ -400,21 +353,27 @@ def fill_slots(components, slot_values, slots_meta, images, brand):
     return components
 
 
+def _is_dark_color(hex_color):
+    """Check if a hex color is dark (for background replacement)."""
+    if not hex_color or hex_color in ("transparent", "", "#FFFFFF", "#ffffff"):
+        return False
+    try:
+        h = hex_color.lstrip("#")
+        if len(h) != 6:
+            return False
+        r, g, b = int(h[:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+        luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+        return luminance < 0.45
+    except (ValueError, IndexError):
+        return False
+
+
 # ─── Main: Generate Suggestions ───
 
 def generate_suggestions(user_id, user_request, status_callback=None):
-    """Generate 5 customized template suggestions using slot-based filling.
-
-    Args:
-        user_id: for brand profile
-        user_request: raw user message (str) or dict with "purpose" key
-        status_callback: optional fn(message) to update progress
-
-    Returns: (suggestions_list, query_text)
-    """
-    # Handle both string and dict input
+    """Generate 5 customized template suggestions."""
     if isinstance(user_request, dict):
-        request_text = user_request.get("purpose", str(user_request))
+        request_text = user_request.get("purpose", user_request.get("user_request", str(user_request)))
     else:
         request_text = str(user_request)
 
@@ -422,7 +381,7 @@ def generate_suggestions(user_id, user_request, status_callback=None):
         if status_callback:
             status_callback(msg)
 
-    # 1. Get brand
+    # 1. Brand
     _status("Loading your brand profile...")
     brand = get_brand_context(user_id)
 
@@ -431,7 +390,7 @@ def generate_suggestions(user_id, user_request, status_callback=None):
     query_text = build_query(request_text, brand)
     matches = search_templates(query_text, top_k=5)
 
-    # 3. Fetch templates from DB
+    # 3. Fetch templates
     session = get_session()
     try:
         slugs = [m["slug"] for m in matches]
@@ -443,7 +402,7 @@ def generate_suggestions(user_id, user_request, status_callback=None):
     finally:
         session.close()
 
-    # 4. Extract slots from each template
+    # 4. Extract slots
     _status("Analyzing template structures...")
     template_slots_map = {}
     for match in matches:
@@ -454,8 +413,8 @@ def generate_suggestions(user_id, user_request, status_callback=None):
     if not template_slots_map:
         return [], query_text
 
-    # 5. LLM fills all slots
-    _status("Writing customized content for your templates...")
+    # 5. LLM fills slots
+    _status("Writing personalized content for your brand...")
     llm_result = generate_slot_content(request_text, brand, template_slots_map)
     template_contents = llm_result.get("templates", {})
     image_queries = llm_result.get("image_queries", [])
@@ -464,8 +423,8 @@ def generate_suggestions(user_id, user_request, status_callback=None):
     _status("Finding perfect images...")
     images = fetch_unsplash_images(image_queries) if image_queries else {}
 
-    # 7. Fill slots into each template
-    _status("Customizing your templates...")
+    # 7. Fill slots
+    _status("Applying your brand to templates...")
     suggestions = []
     for match in matches:
         slug = match["slug"]
