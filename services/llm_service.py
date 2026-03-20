@@ -110,9 +110,24 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None) -
 
             for tc in message.tool_calls:
                 fn_name = tc.function.name
-                fn_args = json.loads(tc.function.arguments)
 
-                result = mcp.handle_tool_call(fn_name, fn_args)
+                try:
+                    fn_args = json.loads(tc.function.arguments)
+                except json.JSONDecodeError as e:
+                    # LLM returned malformed JSON in tool arguments — skip this tool call
+                    logger.warning(f"Malformed tool args for {fn_name}: {e}")
+                    all_messages.append({
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": json.dumps({"error": f"Invalid arguments: {e}"}),
+                    })
+                    continue
+
+                try:
+                    result = mcp.handle_tool_call(fn_name, fn_args)
+                except Exception as e:
+                    logger.warning(f"Tool call {fn_name} failed: {e}")
+                    result = {"error": str(e)}
 
                 # Append tool result
                 all_messages.append({
