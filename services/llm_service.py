@@ -4,12 +4,15 @@ Uses OpenAI-compatible API format (works with DeepSeek, OpenAI, or any compatibl
 """
 
 import json
+import logging
 from openai import OpenAI
 from config.settings import DEEPSEEK_API_KEY
 from mcp.server import EmailEngineMCPServer
 from mcp.tools import TOOLS
 from services.template_saver import create_template_saver
 from engine.presets import local_preset_loader
+
+logger = logging.getLogger(__name__)
 
 _client = None
 _mcp_server = None
@@ -20,23 +23,108 @@ MAX_TOKENS = 8192
 
 SYSTEM_PROMPT = """You are an email template design assistant built into the Template Builder app.
 
-## Your Role
-Help users create, edit, and refine professional email templates. When a user describes an email they want, generate the full component tree JSON and use build_email_html to render it.
+## Your Primary Role
+When a user asks to create an email, use the suggest_templates tool to generate 5 customized template suggestions. This is ALWAYS your first action for any email creation request.
+
+## How suggest_templates Works
+1. You analyze the user's request and extract structured content
+2. Call suggest_templates with the extracted content
+3. The system will: search for matching layouts, fetch relevant images, apply brand colors, and customize each template with your content
+4. 5 fully customized templates are returned to the user
+
+## What to Extract
+When the user describes an email, extract:
+- purpose: what kind of email (welcome, sale, newsletter, launch, event, etc.)
+- headline: main heading text
+- subtitle: supporting text below headline
+- cta_text: call-to-action button text
+- features: list of 3-4 feature/benefit names (for feature sections)
+- body_text: any additional body copy
+- company: company/brand name (from context or brand profile)
+- tone: professional, casual, friendly, urgent, playful, minimal
+- image_queries: 2-3 Unsplash search queries for relevant images (e.g., "fitness workout gym", "modern office team")
 
 ## Rules
-1. ALWAYS use the build_email_html tool to generate templates — never describe templates without building them.
-2. Build RICH templates with 5-8 rows minimum. Include hero, content sections, CTAs, and footer.
-3. Every visual element must be a separate component. If you mention "3 feature cards", build a 3-column row.
-4. Use multi-column rows (width: "50%" for 2-col, "33.33%" for 3-col) for side-by-side layouts.
-5. After build_email_html returns, ALWAYS show the editor_link to the user so they can customize the template.
-6. Keep text responses concise — the template speaks for itself.
+1. ALWAYS call suggest_templates first for email creation requests
+2. Extract as much content as possible from the user's message
+3. For image_queries, think about what visuals would match the email's purpose and industry
+4. If the user asks for changes to a suggestion, use build_email_html to modify it
+5. Keep text responses brief — present the suggestions and let the user choose
+6. For non-email questions, respond normally without tools
 
-## Available Presets
-Call list_presets to see pre-built blocks you can inject instead of building from scratch.
-Use inject_preset to compose emails from presets when they match the user's needs.
+## Example
+User: "Create a welcome email for my yoga studio called ZenFlow"
+You should call suggest_templates with:
+{
+  "purpose": "welcome email for yoga studio",
+  "headline": "Welcome to ZenFlow",
+  "subtitle": "Find your balance. Transform your practice. Join our community.",
+  "cta_text": "Book Your First Class",
+  "features": ["Expert Instructors", "All Levels Welcome", "Flexible Schedule"],
+  "body_text": "Start your yoga journey with us. New members get their first week free.",
+  "company": "ZenFlow",
+  "tone": "friendly",
+  "image_queries": ["yoga class studio", "meditation peaceful", "wellness healthy lifestyle"]
+}"""
 
-## Widget Format
-When you generate a template, the tool returns HTML + an editor link. Present both to the user."""
+# Suggest tool definition (separate from MCP tools)
+SUGGEST_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "suggest_templates",
+        "description": (
+            "Generate 5 customized email template suggestions. Extracts content from the user's request, "
+            "finds matching template layouts via semantic search, fetches relevant Unsplash images, "
+            "applies brand colors, and injects the content into each template. "
+            "Returns 5 fully customized templates for the user to choose from."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "purpose": {
+                    "type": "string",
+                    "description": "What kind of email: welcome, sale, newsletter, launch, event, re-engagement, thank-you, etc.",
+                },
+                "headline": {
+                    "type": "string",
+                    "description": "Main heading text for the email hero section.",
+                },
+                "subtitle": {
+                    "type": "string",
+                    "description": "Supporting text below the headline.",
+                },
+                "cta_text": {
+                    "type": "string",
+                    "description": "Call-to-action button text.",
+                },
+                "features": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of 3-4 feature or benefit names for feature sections.",
+                },
+                "body_text": {
+                    "type": "string",
+                    "description": "Additional body copy or description text.",
+                },
+                "company": {
+                    "type": "string",
+                    "description": "Company or brand name.",
+                },
+                "tone": {
+                    "type": "string",
+                    "enum": ["professional", "casual", "friendly", "urgent", "playful", "minimal"],
+                    "description": "Email tone/style.",
+                },
+                "image_queries": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "2-3 Unsplash search queries for relevant images.",
+                },
+            },
+            "required": ["purpose", "headline", "subtitle", "cta_text"],
+        },
+    },
+}
 
 
 def _get_client():
@@ -57,8 +145,8 @@ def _get_mcp_server():
 
 
 def _convert_tools_to_openai_format() -> list[dict]:
-    """Convert MCP tool definitions to OpenAI-compatible function tool format."""
-    return [
+    """Convert MCP tool definitions to OpenAI-compatible format + add suggest tool."""
+    tools = [
         {
             "type": "function",
             "function": {
@@ -69,14 +157,17 @@ def _convert_tools_to_openai_format() -> list[dict]:
         }
         for tool in TOOLS
     ]
+    tools.append(SUGGEST_TOOL)
+    return tools
 
 
-def chat(messages: list[dict], conversation_history: list[dict] | None = None) -> dict:
-    """Send a chat message with email-engine tools available.
+def chat(messages: list[dict], conversation_history: list[dict] | None = None, user_id: str = None) -> dict:
+    """Send a chat message with email-engine tools + suggestion tool available.
 
     Args:
         messages: New messages [{role, content}]
         conversation_history: Prior messages for context
+        user_id: For brand profile lookup in suggestions
 
     Returns:
         {"role": "assistant", "content": str, "widgets": list}
@@ -88,7 +179,6 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None) -
     all_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     all_messages += (conversation_history or []) + messages
 
-    # Agentic loop — handle tool calls until we get a final text response
     widgets = []
     max_iterations = 10
 
@@ -103,9 +193,7 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None) -
         choice = response.choices[0]
         message = choice.message
 
-        # Check for tool calls
         if message.tool_calls:
-            # Append assistant message with tool calls
             all_messages.append(message.model_dump())
 
             for tc in message.tool_calls:
@@ -114,7 +202,6 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None) -
                 try:
                     fn_args = json.loads(tc.function.arguments)
                 except json.JSONDecodeError as e:
-                    # LLM returned malformed JSON in tool arguments — skip this tool call
                     logger.warning(f"Malformed tool args for {fn_name}: {e}")
                     all_messages.append({
                         "role": "tool",
@@ -123,20 +210,61 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None) -
                     })
                     continue
 
+                # Handle suggest_templates
+                if fn_name == "suggest_templates":
+                    try:
+                        from services.smart_suggest import generate_suggestions
+                        suggestions, query_used = generate_suggestions(
+                            user_id or "anonymous",
+                            fn_args,
+                        )
+
+                        # Return suggestions as tool result
+                        result_summary = {
+                            "suggestions_count": len(suggestions),
+                            "query_used": query_used,
+                            "templates": [
+                                {"slug": s["slug"], "name": s["name"], "score": s["score"]}
+                                for s in suggestions
+                            ],
+                        }
+                        all_messages.append({
+                            "role": "tool",
+                            "tool_call_id": tc.id,
+                            "content": json.dumps(result_summary),
+                        })
+
+                        # Add suggestions as widget
+                        widgets.append({
+                            "type": "suggestion-cards",
+                            "data": {
+                                "suggestions": suggestions,
+                                "query": query_used,
+                            },
+                        })
+                    except Exception as e:
+                        logger.exception(f"suggest_templates failed: {e}")
+                        all_messages.append({
+                            "role": "tool",
+                            "tool_call_id": tc.id,
+                            "content": json.dumps({"error": str(e)}),
+                        })
+                    continue
+
+                # Handle MCP tools
                 try:
                     result = mcp.handle_tool_call(fn_name, fn_args)
                 except Exception as e:
                     logger.warning(f"Tool call {fn_name} failed: {e}")
                     result = {"error": str(e)}
 
-                # Append tool result
                 all_messages.append({
                     "role": "tool",
                     "tool_call_id": tc.id,
                     "content": json.dumps(result, default=str),
                 })
 
-                # Capture rendered HTML + template as a widget
+                # Capture template widgets
                 if fn_name == "build_email_html" and "html" in result:
                     widget = {
                         "type": "template-builder",
@@ -152,22 +280,17 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None) -
                         widget["data"]["template_id"] = result["template_id"]
                     widgets.append(widget)
         else:
-            # No tool calls — final response
             content = message.content or ""
-
-            # If we have widgets but no text, add a default message
             if widgets and not content.strip():
-                content = "Here's your email template!"
-
+                content = "Here are your template suggestions! Pick one to customize."
             return {
                 "role": "assistant",
                 "content": content,
                 "widgets": widgets,
             }
 
-    # Safety: max iterations reached
     return {
         "role": "assistant",
-        "content": "I've finished generating the template.",
+        "content": "Here are your template suggestions!",
         "widgets": widgets,
     }

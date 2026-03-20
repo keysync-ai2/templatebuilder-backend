@@ -52,6 +52,7 @@ def handler(event, context):
         result = chat(
             messages=[{"role": "user", "content": message}],
             conversation_history=history,
+            user_id=user_id,
         )
 
         # Save assistant message to conversation
