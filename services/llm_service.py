@@ -128,15 +128,13 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None) -
                         "data": {
                             "title": result.get("template", {}).get("templateName", "Email Template"),
                             "description": "Click to open in the visual editor",
-                            "timestamp": None,
+                            "html": result["html"],
+                            "template": result.get("template"),
                         },
                     }
-                    # Add editor link if available
                     if "editor_link" in result:
                         widget["data"]["editor_link"] = result["editor_link"]
                         widget["data"]["template_id"] = result["template_id"]
-                    # Add HTML preview
-                    widget["data"]["html"] = result["html"]
                     widgets.append(widget)
         else:
             # No tool calls — final response
