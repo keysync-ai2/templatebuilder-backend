@@ -14,7 +14,7 @@ def success(status_code: int, body: dict) -> dict:
     return {
         "statusCode": status_code,
         "headers": {**_CORS_HEADERS, "Content-Type": "application/json"},
-        "body": json.dumps(body),
+        "body": json.dumps(body, ensure_ascii=False, default=str),
     }
 
 
