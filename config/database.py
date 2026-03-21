@@ -16,8 +16,10 @@ def get_engine():
         _engine = create_engine(
             DATABASE_URL,
             pool_pre_ping=True,
-            pool_size=1,       # Lambda = 1 concurrent request per instance
-            max_overflow=0,
+            pool_size=1,
+            max_overflow=2,
+            pool_recycle=300,
+            pool_timeout=10,
         )
     return _engine
 
