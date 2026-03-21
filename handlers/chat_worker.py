@@ -71,6 +71,7 @@ def handler(event, context):
                 messages=[{"role": "user", "content": message}],
                 conversation_history=history,
                 user_id=user_id,
+                conversation_id=conversation_id,
             )
         finally:
             smart_suggest.generate_suggestions = original_fn

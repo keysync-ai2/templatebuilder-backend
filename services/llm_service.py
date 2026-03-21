@@ -127,45 +127,48 @@ def _get_all_tools(user_id=None):
     return builtin, registry
 
 
-def _enrich_history(conversation_history):
-    """Enrich conversation history — ensure tool context is preserved.
+def _build_context(conversation_id, conversation_history, user_id=None):
+    """Build conversation context using rolling summary + last 5 pairs.
 
-    If assistant messages have summaries of what was suggested/created,
-    those are already in the content. Just pass through.
+    Uses context_manager for smart history pruning within 20K token budget.
     """
-    if not conversation_history:
-        return []
-
-    enriched = []
-    for msg in conversation_history:
-        # Only include role and content (skip widgets, they're too large)
-        enriched.append({
-            "role": msg.get("role", "user"),
-            "content": msg.get("content", ""),
-        })
-    return enriched
+    from services.context_manager import build_history
+    return build_history(conversation_id, conversation_history, user_id)
 
 
-def chat(messages: list[dict], conversation_history: list[dict] | None = None, user_id: str = None) -> dict:
+def chat(messages: list[dict], conversation_history: list[dict] | None = None,
+         user_id: str = None, conversation_id: str = None) -> dict:
     """Send a chat message with all tools available.
 
     Args:
         messages: New messages [{role, content}]
         conversation_history: Prior messages for context
-        user_id: For brand profile and suggestion lookups
+        user_id: For brand profile, suggestions, token tracking
+        conversation_id: For rolling summary storage
 
     Returns:
-        {"role": "assistant", "content": str, "widgets": list}
+        {"role": "assistant", "content": str, "widgets": list, "token_usage": dict}
     """
+    from services.token_tracker import check_limit, track_usage, get_usage
+    from services.map_reduce import needs_map_reduce, summarize_large_response
+
+    # Check daily token limit
+    allowed, usage = check_limit(user_id or "anonymous")
+    if not allowed:
+        return {
+            "role": "assistant",
+            "content": "You've reached your daily token limit (2M tokens). Your limit resets at midnight.",
+            "widgets": [],
+            "token_usage": usage,
+        }
+
     client = _get_client()
     builtin_tools, registry = _get_all_tools(user_id)
-
-    # Combine built-in + MCP tools
     all_tools = builtin_tools + registry.get_openai_tools()
 
-    # Build message chain
+    # Build message chain with rolling summary
     all_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    all_messages += _enrich_history(conversation_history)
+    all_messages += _build_context(conversation_id, conversation_history, user_id)
     all_messages += messages
 
     widgets = []
@@ -180,6 +183,10 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None, u
             messages=all_messages,
         )
 
+        # Track token usage
+        if response.usage and user_id:
+            track_usage(user_id, response.usage.prompt_tokens, response.usage.completion_tokens)
+
         choice = response.choices[0]
         message = choice.message
 
@@ -189,11 +196,11 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None, u
             if widgets and not content.strip():
                 content = "Here are your template suggestions! Pick one to customize in the editor."
 
-            # Build enriched content for DB storage (includes tool summaries)
             return {
                 "role": "assistant",
                 "content": content,
                 "widgets": widgets,
+                "token_usage": get_usage(user_id or "anonymous"),
             }
 
         # Process tool calls
@@ -307,11 +314,24 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None, u
             # ── All other tools — route via ToolRegistry ──
             result = registry.call_tool(fn_name, fn_args)
 
-            all_messages.append({
-                "role": "tool",
-                "tool_call_id": tc.id,
-                "content": json.dumps(result, default=str),
-            })
+            # Check if tool response is too large for context
+            result_json = json.dumps(result, default=str)
+            is_large, est_tokens = needs_map_reduce(result_json)
+
+            if is_large:
+                logger.info(f"Large tool response from {fn_name}: ~{est_tokens} tokens, applying map-reduce")
+                summarized = summarize_large_response(result, fn_name, user_id)
+                all_messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": f"[Response summarized from ~{est_tokens} tokens]\n{summarized}",
+                })
+            else:
+                all_messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": result_json,
+                })
 
             # Capture template widgets from build_email_html
             actual_name = fn_name.split(":")[-1] if ":" in fn_name else fn_name
@@ -335,4 +355,5 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None, u
         "role": "assistant",
         "content": "I've processed your request. Here are the results!",
         "widgets": widgets,
+        "token_usage": get_usage(user_id or "anonymous"),
     }

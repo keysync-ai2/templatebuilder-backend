@@ -40,6 +40,11 @@ def handler(event, context):
     if path == "/api/chat" and method == "POST":
         return _submit_chat(body, user_id)
 
+    # GET /api/chat/tokens
+    if path == "/api/chat/tokens" and method == "GET":
+        from services.token_tracker import get_usage
+        return success(200, get_usage(user_id))
+
     # POST /api/chat/command
     if path == "/api/chat/command" and method == "POST":
         from handlers.command import _handle_command
@@ -134,6 +139,9 @@ def _poll_status(task_id: str, user_id: str):
         if task.status == "completed":
             result["message"] = task.result_content
             result["widgets"] = task.result_widgets or []
+            # Include token usage
+            from services.token_tracker import get_usage
+            result["token_usage"] = get_usage(user_id)
         elif task.status == "failed":
             result["error"] = task.error_message
 
