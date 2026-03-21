@@ -319,13 +319,26 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None,
             is_large, est_tokens = needs_map_reduce(result_json)
 
             if is_large:
-                logger.info(f"Large tool response from {fn_name}: ~{est_tokens} tokens, applying map-reduce")
-                summarized = summarize_large_response(result, fn_name, user_id)
-                all_messages.append({
-                    "role": "tool",
-                    "tool_call_id": tc.id,
-                    "content": f"[Response summarized from ~{est_tokens} tokens]\n{summarized}",
-                })
+                # Save full response to conversation_documents and request permission
+                doc_id = _save_large_response(conversation_id, task_id, fn_name, result, est_tokens)
+                return {
+                    "role": "assistant",
+                    "content": "",
+                    "widgets": [{
+                        "type": "permission-request",
+                        "data": {
+                            "doc_id": doc_id,
+                            "tool_name": fn_name,
+                            "estimated_tokens": est_tokens,
+                            "message": f"The response from **{fn_name}** is very large (~{est_tokens:,} tokens). I need to summarize it to continue the conversation.",
+                        },
+                    }],
+                    "token_usage": get_usage(user_id or "anonymous"),
+                    "needs_permission": True,
+                    "pending_doc_id": doc_id,
+                    "pending_tool_call_id": tc.id,
+                    "pending_messages": all_messages,
+                }
             else:
                 all_messages.append({
                     "role": "tool",
@@ -357,3 +370,112 @@ def chat(messages: list[dict], conversation_history: list[dict] | None = None,
         "widgets": widgets,
         "token_usage": get_usage(user_id or "anonymous"),
     }
+
+
+def _save_large_response(conversation_id, task_id, tool_name, result, est_tokens):
+    """Save a large tool response to conversation_documents for later processing."""
+    import uuid
+    session = get_session()
+    try:
+        from sqlalchemy import text as sql_text
+        doc_id = str(uuid.uuid4())
+        session.execute(sql_text('''
+            INSERT INTO conversation_documents (id, conversation_id, task_id, doc_type, tool_name, content, estimated_tokens)
+            VALUES (:id, :conv, :task, 'tool_response', :tool, :content, :tokens)
+        '''), {
+            'id': doc_id,
+            'conv': conversation_id or '',
+            'task': task_id or '',
+            'tool': tool_name,
+            'content': json.dumps(result, default=str),
+            'tokens': est_tokens,
+        })
+        session.commit()
+        return doc_id
+    except Exception as e:
+        logger.error(f"Failed to save large response: {e}")
+        return ""
+    finally:
+        session.close()
+
+
+def resume_after_permission(doc_id, choice, user_id=None, status_callback=None):
+    """Resume processing after user grants/denies permission for map-reduce.
+
+    Args:
+        doc_id: conversation_documents.id with the large response
+        choice: "summarize" or "skip"
+        user_id: for token tracking
+        status_callback: fn(message) for progress updates
+
+    Returns: {"content": str, "tool_result_for_llm": str}
+    """
+    from services.map_reduce import summarize_large_response
+    from services.token_tracker import get_usage
+
+    session = get_session()
+    try:
+        from sqlalchemy import text as sql_text
+        r = session.execute(sql_text(
+            'SELECT tool_name, content, estimated_tokens FROM conversation_documents WHERE id = :id'
+        ), {'id': doc_id})
+        row = r.fetchone()
+        if not row:
+            return {"content": "Document not found.", "tool_result_for_llm": ""}
+
+        tool_name, content_json, est_tokens = row
+        content = json.loads(content_json) if isinstance(content_json, str) else content_json
+
+        if choice == "summarize":
+            if status_callback:
+                status_callback(f"Summarizing large response from {tool_name}...")
+
+            # Map-reduce with progress
+            from services.map_reduce import _split_chunks, _summarize_chunk, _reduce_summaries, CHUNK_SIZE, OVERLAP, estimate_tokens as est
+
+            text = json.dumps(content, default=str)
+            chunks = _split_chunks(text, CHUNK_SIZE, OVERLAP)
+            total_chunks = len(chunks)
+
+            chunk_summaries = []
+            for i, chunk in enumerate(chunks):
+                if status_callback:
+                    status_callback(f"Summarizing chunk {i+1}/{total_chunks}...")
+                summary = _summarize_chunk(chunk, tool_name, i + 1, total_chunks)
+                chunk_summaries.append(summary)
+
+                if user_id:
+                    from services.token_tracker import track_usage
+                    track_usage(user_id, est(chunk), est(summary))
+
+            if len(chunk_summaries) > 1:
+                if status_callback:
+                    status_callback("Combining summaries...")
+                final = _reduce_summaries("\n\n".join(chunk_summaries), tool_name)
+            else:
+                final = chunk_summaries[0] if chunk_summaries else ""
+
+            return {
+                "content": f"I've summarized the response from {tool_name} (~{est_tokens:,} tokens → {est(final):,} tokens).",
+                "tool_result_for_llm": final,
+            }
+        else:
+            # Skip — return minimal metadata
+            if isinstance(content, dict):
+                meta_parts = []
+                if "suggestions" in content:
+                    meta_parts.append(f"{len(content['suggestions'])} suggestions returned")
+                elif "templates" in content:
+                    meta_parts.append(f"{len(content['templates'])} templates returned")
+                else:
+                    meta_parts.append(f"Response with {len(content)} keys")
+                meta = ". ".join(meta_parts)
+            else:
+                meta = f"Response data ({est_tokens:,} tokens)"
+
+            return {
+                "content": f"Results from {tool_name} are ready — you can view them below.",
+                "tool_result_for_llm": meta,
+            }
+    finally:
+        session.close()

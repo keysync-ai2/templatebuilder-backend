@@ -45,6 +45,10 @@ def handler(event, context):
         from services.token_tracker import get_usage
         return success(200, get_usage(user_id))
 
+    # POST /api/chat/permission
+    if path == "/api/chat/permission" and method == "POST":
+        return _handle_permission(body, user_id)
+
     # POST /api/chat/command
     if path == "/api/chat/command" and method == "POST":
         from handlers.command import _handle_command
@@ -139,12 +143,66 @@ def _poll_status(task_id: str, user_id: str):
         if task.status == "completed":
             result["message"] = task.result_content
             result["widgets"] = task.result_widgets or []
-            # Include token usage
             from services.token_tracker import get_usage
             result["token_usage"] = get_usage(user_id)
+        elif task.status == "needs_permission":
+            result["widgets"] = task.result_widgets or []
+            result["pending_doc_id"] = task.pending_doc_id or ""
         elif task.status == "failed":
             result["error"] = task.error_message
 
         return success(200, result)
+    finally:
+        session.close()
+
+
+def _handle_permission(body: dict, user_id: str):
+    """Handle user's permission choice for map-reduce."""
+    task_id = body.get("task_id", "")
+    choice = body.get("choice", "")  # "summarize" or "skip"
+    doc_id = body.get("doc_id", "")
+
+    if not task_id or not choice:
+        return error(400, "VALIDATION_ERROR", "task_id and choice required")
+
+    if choice not in ("summarize", "skip"):
+        return error(400, "VALIDATION_ERROR", "choice must be 'summarize' or 'skip'")
+
+    session = get_session()
+    try:
+        task = session.query(ChatTask).filter_by(id=task_id, user_id=user_id).first()
+        if not task:
+            return error(404, "NOT_FOUND", "Task not found")
+
+        task.permission_choice = choice
+        task.status = "processing"
+        task.status_message = "Resuming with your choice..."
+        session.commit()
+
+        # Invoke worker to resume
+        try:
+            _get_lambda_client().invoke(
+                FunctionName="email-builder-chat-worker",
+                InvocationType="Event",
+                Payload=json.dumps({
+                    "task_id": task_id,
+                    "user_id": user_id,
+                    "conversation_id": task.conversation_id,
+                    "message": task.message,
+                    "resume_permission": True,
+                    "doc_id": doc_id or task.pending_doc_id,
+                    "choice": choice,
+                }),
+            )
+        except Exception as e:
+            task.status = "failed"
+            task.error_message = f"Failed to resume: {str(e)}"
+            session.commit()
+
+        return success(202, {
+            "task_id": task_id,
+            "status": "processing",
+            "choice": choice,
+        })
     finally:
         session.close()
